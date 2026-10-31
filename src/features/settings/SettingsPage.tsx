@@ -36,16 +36,16 @@ export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('all')
 
   const tabs: Array<{ id: SettingsTab; label: string; icon: React.ReactNode }> = [
-    { id: 'all', label: 'Overview (All)', icon: <Layers className="w-3.5 h-3.5" /> },
-    { id: 'profile', label: 'User Identity', icon: <User className="w-3.5 h-3.5" /> },
-    { id: 'regional', label: 'Currency & Locale', icon: <Globe className="w-3.5 h-3.5" /> },
-    { id: 'caliper', label: 'Caliper Tolerances', icon: <Sliders className="w-3.5 h-3.5" /> },
-    { id: 'data', label: 'Data & Recovery', icon: <Database className="w-3.5 h-3.5" /> },
-    { id: 'security', label: 'Security & Sessions', icon: <Shield className="w-3.5 h-3.5" /> },
+    { id: 'all', label: 'Overview (All)', icon: <Layers className="w-4.5 h-4.5" /> },
+    { id: 'profile', label: 'User Identity', icon: <User className="w-4.5 h-4.5" /> },
+    { id: 'regional', label: 'Currency & Locale', icon: <Globe className="w-4.5 h-4.5" /> },
+    { id: 'caliper', label: 'Caliper Tolerances', icon: <Sliders className="w-4.5 h-4.5" /> },
+    { id: 'data', label: 'Data & Recovery', icon: <Database className="w-4.5 h-4.5" /> },
+    { id: 'security', label: 'Security & Sessions', icon: <Shield className="w-4.5 h-4.5" /> },
   ]
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       {/* Header with Title and Quick Export */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[#d2d9e4]">
         <div>
