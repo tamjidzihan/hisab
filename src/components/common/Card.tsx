@@ -22,7 +22,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
             {header}
           </div>
         )}
-        <div className="p-5">{children}</div>
+        <div className={cn("p-5", className)}>{children}</div>
         {footer && (
           <div className="px-5 py-3 border-t border-[#e5eaf0] bg-[#fafbfd] flex items-center justify-between text-xs text-[#64748b]">
             {footer}
@@ -34,4 +34,3 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
 )
 
 Card.displayName = 'Card'
-
