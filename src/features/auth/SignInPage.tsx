@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, KeyRound } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { Input } from '@/components/common/Input'
 import { Button } from '@/components/common/Button'
 import { useAuth } from './AuthContext'
@@ -41,12 +41,6 @@ export const SignInPage: React.FC = () => {
     }
   }
 
-  const handleFillDemo = () => {
-    setEmail('zihan@hisab.local')
-    setPassword('ledger2026!')
-    setError(null)
-  }
-
   return (
     <div className="space-y-6">
       {/* Surface Heading */}
@@ -58,23 +52,6 @@ export const SignInPage: React.FC = () => {
           Enter your master credentials to decrypt and access your accounts.
         </p>
       </div>
-
-      {/* Demo Account Shortcut Banner */}
-      <button
-        type="button"
-        onClick={handleFillDemo}
-        className="w-full p-2.5 bg-[#f8fafc] border border-[#d2d9e4] rounded-[4px] flex items-center justify-between text-left hover:bg-[#f1f5f9] transition-colors cursor-pointer group"
-      >
-        <div className="flex items-center gap-2">
-          <KeyRound className="w-3.5 h-3.5 text-[#059669] shrink-0" />
-          <span className="text-xs font-mono text-[#161d26]">
-            Demo Vault: <span className="text-[#64748b]">zihan@hisab.local</span>
-          </span>
-        </div>
-        <span className="text-[10px] font-mono font-semibold text-[#059669] group-hover:underline">
-          Autofill Credentials →
-        </span>
-      </button>
 
       {/* Error Alert */}
       {error && (

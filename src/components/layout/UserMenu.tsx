@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { User, Settings, Download, LogOut, ChevronDown } from 'lucide-react'
+import { apiClient } from '@/lib/api'
 import { exportTransactionsToCsv } from '@/features/transactions/csvUtils'
-import { INITIAL_TRANSACTIONS } from '@/features/transactions/useTransactions'
 import { useAuth } from '@/features/auth/AuthContext'
 
 export interface UserMenuProps {
@@ -121,9 +121,15 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             </Link>
 
             <button
-              onClick={() => {
+              onClick={async () => {
                 setIsOpen(false)
-                exportTransactionsToCsv(INITIAL_TRANSACTIONS)
+                try {
+                  const res = await apiClient.get('/transactions?limit=1000')
+                  const txs = res.data?.data?.transactions || []
+                  exportTransactionsToCsv(txs)
+                } catch {
+                  exportTransactionsToCsv([])
+                }
               }}
               className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[#161d26] hover:bg-[#f4f6f9] transition-colors text-left cursor-pointer"
               role="menuitem"

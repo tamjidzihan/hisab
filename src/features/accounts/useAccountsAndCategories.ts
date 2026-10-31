@@ -2,161 +2,9 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { apiClient } from '@/lib/api'
 import type { Account, Category } from '@/types'
 
-const INITIAL_ACCOUNTS: Account[] = [
-  {
-    id: 'acc-1',
-    userId: 'usr-1',
-    name: 'Cash Vault',
-    type: 'cash',
-    currency: 'BDT',
-    openingBalanceMinor: 500000, // ৳5,000.00
-    currentBalanceMinor: 842000, // ৳8,420.00
-    isArchived: false,
-  },
-  {
-    id: 'acc-2',
-    userId: 'usr-1',
-    name: 'Prime Bank Current',
-    type: 'bank',
-    currency: 'BDT',
-    openingBalanceMinor: 10000000, // ৳100,000.00
-    currentBalanceMinor: 12450000, // ৳124,500.00
-    accountNumberMasked: '•••• 4892',
-    isArchived: false,
-  },
-  {
-    id: 'acc-3',
-    userId: 'usr-1',
-    name: 'bKash Primary MFS',
-    type: 'mobile_wallet',
-    currency: 'BDT',
-    openingBalanceMinor: 250000, // ৳2,500.00
-    currentBalanceMinor: 1685000, // ৳16,850.00
-    accountNumberMasked: '017••••1234',
-    isArchived: false,
-  },
-  {
-    id: 'acc-4',
-    userId: 'usr-1',
-    name: 'Nagad Wallet',
-    type: 'mobile_wallet',
-    currency: 'BDT',
-    openingBalanceMinor: 100000, // ৳1,000.00
-    currentBalanceMinor: 430000, // ৳4,300.00
-    accountNumberMasked: '018••••5678',
-    isArchived: false,
-  },
-  {
-    id: 'acc-5',
-    userId: 'usr-1',
-    name: 'Standard Chartered Titanium',
-    type: 'card',
-    currency: 'BDT',
-    openingBalanceMinor: 0,
-    currentBalanceMinor: -1280000, // -৳12,800.00 (credit balance)
-    accountNumberMasked: '•••• 3108',
-    isArchived: false,
-  },
-]
-
-const INITIAL_CATEGORIES: Category[] = [
-  // Expense Categories
-  {
-    id: 'cat-food',
-    userId: null,
-    name: 'Groceries & Dining',
-    type: 'expense',
-    color: '#059669',
-    icon: 'Utensils',
-    isArchived: false,
-  },
-  {
-    id: 'cat-bills',
-    userId: null,
-    name: 'Utilities & Subscriptions',
-    type: 'expense',
-    color: '#d97706',
-    icon: 'Zap',
-    isArchived: false,
-  },
-  {
-    id: 'cat-transport',
-    userId: null,
-    name: 'Transportation & Fuel',
-    type: 'expense',
-    color: '#2563eb',
-    icon: 'Car',
-    isArchived: false,
-  },
-  {
-    id: 'cat-housing',
-    userId: null,
-    name: 'Housing & Rent',
-    type: 'expense',
-    color: '#161d26',
-    icon: 'Home',
-    isArchived: false,
-  },
-  {
-    id: 'cat-health',
-    userId: null,
-    name: 'Health & Medical',
-    type: 'expense',
-    color: '#dc2626',
-    icon: 'Activity',
-    isArchived: false,
-  },
-  {
-    id: 'cat-personal',
-    userId: null,
-    name: 'Personal Discretionary',
-    type: 'expense',
-    color: '#64748b',
-    icon: 'ShoppingBag',
-    isArchived: false,
-  },
-  {
-    id: 'cat-education',
-    userId: null,
-    name: 'Education & Learning',
-    type: 'expense',
-    color: '#7c3aed',
-    icon: 'BookOpen',
-    isArchived: false,
-  },
-  // Income Categories
-  {
-    id: 'cat-salary',
-    userId: null,
-    name: 'Professional Retainer',
-    type: 'income',
-    color: '#059669',
-    icon: 'Briefcase',
-    isArchived: false,
-  },
-  {
-    id: 'cat-consulting',
-    userId: 'usr-1',
-    name: 'Advisory Consultation',
-    type: 'income',
-    color: '#2563eb',
-    icon: 'MessageSquare',
-    isArchived: false,
-  },
-  {
-    id: 'cat-invest',
-    userId: null,
-    name: 'Investment Dividends',
-    type: 'income',
-    color: '#d97706',
-    icon: 'TrendingUp',
-    isArchived: false,
-  },
-]
-
 export function useAccountsAndCategories() {
-  const [accounts, setAccounts] = useState<Account[]>(INITIAL_ACCOUNTS)
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES)
+  const [accounts, setAccounts] = useState<Account[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [activeTab, setActiveTab] = useState<'accounts' | 'categories'>('accounts')
   const [categoryTypeFilter, setCategoryTypeFilter] = useState<'all' | 'expense' | 'income'>('all')
   const [isLoading, setIsLoading] = useState(false)
@@ -170,7 +18,7 @@ export function useAccountsAndCategories() {
         apiClient.get<{ success: boolean; data: { categories: any[] } }>('/categories').catch(() => null),
       ])
 
-      if (accRes?.data?.data?.accounts && accRes.data.data.accounts.length > 0) {
+      if (accRes?.data?.data?.accounts && Array.isArray(accRes.data.data.accounts)) {
         setAccounts(accRes.data.data.accounts.map((a: any) => ({
           id: a.id,
           userId: a.userId,
@@ -182,9 +30,11 @@ export function useAccountsAndCategories() {
           accountNumberMasked: a.accountNumber ? `•••• ${a.accountNumber.slice(-4)}` : undefined,
           isArchived: Boolean(a.isArchived),
         })))
+      } else {
+        setAccounts([])
       }
 
-      if (catRes?.data?.data?.categories && catRes.data.data.categories.length > 0) {
+      if (catRes?.data?.data?.categories && Array.isArray(catRes.data.data.categories)) {
         setCategories(catRes.data.data.categories.map((c: any) => ({
           id: c.id,
           userId: c.userId,
@@ -194,9 +44,12 @@ export function useAccountsAndCategories() {
           icon: c.icon,
           isArchived: Boolean(c.isArchived),
         })))
+      } else {
+        setCategories([])
       }
     } catch {
-      // Retain fallback defaults
+      setAccounts([])
+      setCategories([])
     } finally {
       setIsLoading(false)
     }
@@ -393,4 +246,3 @@ export function useAccountsAndCategories() {
     refreshData: fetchData,
   }
 }
-

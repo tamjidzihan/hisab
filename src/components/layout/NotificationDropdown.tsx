@@ -23,52 +23,9 @@ export interface NotificationItem {
   severity: 'critical' | 'warning' | 'info' | 'success'
 }
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-1',
-    type: 'caliper_breach',
-    title: 'Transportation Budget Exceeded',
-    message: 'Current spending of ৳8,400 has exceeded the ৳8,000 limit (105% consumed).',
-    timestamp: '15m ago',
-    isRead: false,
-    link: '/budgets',
-    severity: 'critical',
-  },
-  {
-    id: 'notif-2',
-    type: 'caliper_warning',
-    title: 'Utilities Caliper at 88.5%',
-    message: 'Crossed the 80% warning threshold. ৳8,850 spent of ৳10,000 allowance.',
-    timestamp: '2h ago',
-    isRead: false,
-    link: '/budgets',
-    severity: 'warning',
-  },
-  {
-    id: 'notif-3',
-    type: 'bill_reminder',
-    title: 'House Rent Due in 4 Days',
-    message: 'Scheduled monthly obligation of ৳22,000 due on 05 Nov 2026.',
-    timestamp: 'Today, 09:00',
-    isRead: false,
-    link: '/dashboard',
-    severity: 'info',
-  },
-  {
-    id: 'notif-4',
-    type: 'liquidity',
-    title: 'Retainer Deposit Posted',
-    message: '+৳60,000 received in Prime Bank Current from TechCorp Solutions.',
-    timestamp: 'Yesterday',
-    isRead: true,
-    link: '/transactions',
-    severity: 'success',
-  },
-]
-
 export const NotificationDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
