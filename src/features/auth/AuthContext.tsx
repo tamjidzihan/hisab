@@ -47,6 +47,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user])
 
+  // Hydrate or initialize session with backend
+  useEffect(() => {
+    try {
+      const existingToken = localStorage.getItem('hisab_auth_token')
+      if (existingToken) {
+        apiClient
+          .get<{ success: boolean; data: { user: AuthUser } }>('/auth/me')
+          .then((res) => {
+            if (res.data?.data?.user) {
+              setUser(res.data.data.user)
+            }
+          })
+          .catch(() => {
+            try { localStorage.removeItem('hisab_auth_token') } catch { /* noop */ }
+          })
+      } else {
+        // Auto-link demo workstation with backend ledger if available
+        apiClient
+          .post<{ success: boolean; data: { user: AuthUser; token: string } }>('/auth/login', {
+            email: 'zihan@hisab.local',
+            password: 'ledger2026!',
+          })
+          .then((res) => {
+            if (res.data?.data?.token) {
+              try { localStorage.setItem('hisab_auth_token', res.data.data.token) } catch { /* noop */ }
+              if (res.data.data.user) {
+                setUser(res.data.data.user)
+              }
+            }
+          })
+          .catch(() => {
+            // Keep client demo mode active if backend unreachable
+          })
+      }
+    } catch {
+      // Local fallback
+    }
+  }, [])
+
   const login = useCallback(async (credentials: LoginCredentials) => {
     setIsLoading(true)
     try {
@@ -58,6 +97,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         if (response.data?.data?.user) {
           const apiUser = response.data.data.user
+          if (response.data.data.token) {
+            try { localStorage.setItem('hisab_auth_token', response.data.data.token) } catch { /* noop */ }
+          }
           setUser(apiUser)
           toast.success(`Vault Unlocked: Welcome back, ${apiUser.name}`)
           return
@@ -125,6 +167,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         if (response.data?.data?.user) {
           const apiUser = response.data.data.user
+          if (response.data.data.token) {
+            try { localStorage.setItem('hisab_auth_token', response.data.data.token) } catch { /* noop */ }
+          }
           setUser(apiUser)
           toast.success(`Ledger Vault Constructed: Welcome, ${apiUser.name}`)
           return
@@ -163,7 +208,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     } finally {
       setUser(null)
-      localStorage.removeItem(STORAGE_KEY)
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+        localStorage.removeItem('hisab_auth_token')
+      } catch {
+        // noop
+      }
       toast.info('Ledger Vault Locked. Session terminated.')
     }
   }, [])

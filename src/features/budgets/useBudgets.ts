@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { format, addMonths, subMonths, isSameMonth } from 'date-fns'
+import { apiClient } from '@/lib/api'
 import type { Budget } from '@/types'
 
 const INITIAL_BUDGETS_MAP: Record<string, Budget[]> = {
@@ -103,6 +104,7 @@ export function useBudgets() {
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date('2026-11-01T00:00:00'))
   const [budgetsMap, setBudgetsMap] = useState<Record<string, Budget[]>>(INITIAL_BUDGETS_MAP)
   const [filter, setFilter] = useState<BudgetFilterType>('all')
+  const [isLoading, setIsLoading] = useState(false)
 
   const currentMonthKey = useMemo(() => format(currentDate, 'yyyy-MM'), [currentDate])
   const formattedMonthDisplay = useMemo(() => format(currentDate, 'MMMM yyyy'), [currentDate])
@@ -115,6 +117,42 @@ export function useBudgets() {
   const goToPreviousMonth = () => setCurrentDate((prev) => subMonths(prev, 1))
   const goToNextMonth = () => setCurrentDate((prev) => addMonths(prev, 1))
   const goToCurrentMonth = () => setCurrentDate(new Date('2026-11-01T00:00:00'))
+
+  // Fetch budgets for active month from backend
+  const fetchBudgets = useCallback(async (monthKey: string) => {
+    try {
+      setIsLoading(true)
+      const res = await apiClient.get<{ success: boolean; data: { budgets: any[] } }>(
+        `/budgets?month=${monthKey}`
+      )
+      if (res.data?.data?.budgets && Array.isArray(res.data.data.budgets) && res.data.data.budgets.length > 0) {
+        const mapped: Budget[] = res.data.data.budgets.map((b: any) => ({
+          id: b.id,
+          userId: b.userId,
+          categoryId: b.categoryId,
+          categoryName: b.category?.name || b.categoryName || 'General',
+          categoryColor: b.category?.color || b.categoryColor || '#059669',
+          month: b.month,
+          limitMinor: Number(b.limitMinor),
+          spentMinor: Number(b.spentMinor || 0),
+          alertThreshold: typeof b.alertThreshold === 'number' && b.alertThreshold > 1 ? b.alertThreshold / 100 : parseFloat(b.alertThreshold) || 0.8,
+        }))
+
+        setBudgetsMap((prev) => ({
+          ...prev,
+          [monthKey]: mapped,
+        }))
+      }
+    } catch {
+      // Retain fallback dataset
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchBudgets(currentMonthKey)
+  }, [currentMonthKey, fetchBudgets])
 
   // Active budgets for the selected month
   const activeBudgets = useMemo(() => {
@@ -168,9 +206,10 @@ export function useBudgets() {
   // CRUD actions
   const createBudget = useCallback(
     (newBgt: Omit<Budget, 'id' | 'month' | 'spentMinor'>) => {
+      const tempId = `bgt-${Date.now()}`
       const budget: Budget = {
         ...newBgt,
-        id: `bgt-${Date.now()}`,
+        id: tempId,
         month: `${currentMonthKey}-01`,
         spentMinor: 0,
       }
@@ -179,6 +218,22 @@ export function useBudgets() {
         ...prev,
         [currentMonthKey]: [...(prev[currentMonthKey] || []), budget],
       }))
+
+      apiClient.post('/budgets', {
+        categoryId: newBgt.categoryId,
+        month: currentMonthKey,
+        limitMinor: newBgt.limitMinor,
+        alertThreshold: Math.round((newBgt.alertThreshold ?? 0.8) * 100),
+      }).then((res) => {
+        if (res.data?.data?.budget?.id) {
+          setBudgetsMap((prev) => ({
+            ...prev,
+            [currentMonthKey]: (prev[currentMonthKey] || []).map((b) =>
+              b.id === tempId ? { ...b, id: res.data.data.budget.id } : b
+            ),
+          }))
+        }
+      }).catch(() => {})
 
       return budget
     },
@@ -193,6 +248,11 @@ export function useBudgets() {
           bgt.id === id ? { ...bgt, ...updates } : bgt
         ),
       }))
+
+      apiClient.patch(`/budgets/${id}`, {
+        limitMinor: updates.limitMinor,
+        alertThreshold: updates.alertThreshold ? Math.round(updates.alertThreshold * 100) : undefined,
+      }).catch(() => {})
     },
     [currentMonthKey]
   )
@@ -203,6 +263,8 @@ export function useBudgets() {
         ...prev,
         [currentMonthKey]: (prev[currentMonthKey] || []).filter((bgt) => bgt.id !== id),
       }))
+
+      apiClient.delete(`/budgets/${id}`).catch(() => {})
     },
     [currentMonthKey]
   )
@@ -226,6 +288,16 @@ export function useBudgets() {
       [currentMonthKey]: [...(prev[currentMonthKey] || []), ...copied],
     }))
 
+    // Asynchronously create in backend
+    copied.forEach((b) => {
+      apiClient.post('/budgets', {
+        categoryId: b.categoryId,
+        month: currentMonthKey,
+        limitMinor: b.limitMinor,
+        alertThreshold: Math.round((b.alertThreshold ?? 0.8) * 100),
+      }).catch(() => {})
+    })
+
     return copied.length
   }, [currentDate, currentMonthKey, budgetsMap])
 
@@ -235,6 +307,7 @@ export function useBudgets() {
     metrics,
     filter,
     setFilter,
+    isLoading,
     currentDate,
     currentMonthKey,
     formattedMonthDisplay,
@@ -246,6 +319,7 @@ export function useBudgets() {
     updateBudget,
     deleteBudget,
     copyBudgetsFromPreviousMonth,
+    refreshBudgets: () => fetchBudgets(currentMonthKey),
   }
 }
 

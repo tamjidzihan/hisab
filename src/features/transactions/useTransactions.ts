@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { apiClient } from '@/lib/api'
 import type { Transaction, TransactionType } from '@/types'
 
-// Initial ledger seed records in integer minor units (paisa)
+// Initial ledger seed records in integer minor units (paisa) as fallback
 export const INITIAL_TRANSACTIONS: Transaction[] = [
   {
     id: 'tx-101',
@@ -164,6 +165,7 @@ export interface TransactionFilterState {
 
 export function useTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS)
+  const [isLoading, setIsLoading] = useState(false)
   const [filters, setFilters] = useState<TransactionFilterState>({
     search: '',
     type: 'all',
@@ -176,6 +178,48 @@ export function useTransactions() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+
+  // Fetch transactions from backend
+  const fetchTransactions = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const res = await apiClient.get<{ success: boolean; data: { transactions: any[] } }>('/transactions?limit=250')
+      if (res.data?.data?.transactions && Array.isArray(res.data.data.transactions) && res.data.data.transactions.length > 0) {
+        const mapped: Transaction[] = res.data.data.transactions.map((tx: any) => ({
+          id: tx.id,
+          userId: tx.userId,
+          accountId: tx.accountId,
+          accountName: tx.account?.name || tx.accountName || 'Account Vault',
+          categoryId: tx.categoryId,
+          categoryName: tx.category?.name || tx.categoryName || undefined,
+          categoryColor: tx.category?.color || tx.categoryColor || undefined,
+          type: tx.type,
+          amountMinor: Number(tx.amountMinor),
+          currency: tx.currency || 'BDT',
+          transactionDate: tx.transactionDate,
+          description: tx.description,
+          payee: tx.payee || undefined,
+          paymentMethod: tx.paymentMethod || undefined,
+          transferGroupId: tx.transferGroupId || null,
+          transferDestinationAccountId: tx.transferDestinationAccountId || null,
+          transferDestinationAccountName: tx.transferDestinationAccountName || undefined,
+          notes: tx.notes || undefined,
+          tags: Array.isArray(tx.tags) ? tx.tags : typeof tx.tags === 'string' ? JSON.parse(tx.tags || '[]') : [],
+          createdAt: tx.createdAt || new Date().toISOString(),
+          updatedAt: tx.updatedAt || new Date().toISOString(),
+        }))
+        setTransactions(mapped)
+      }
+    } catch {
+      // Quiet fallback to initial transactions
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchTransactions()
+  }, [fetchTransactions])
 
   // Unique lists for dropdowns
   const availableAccounts = useMemo(() => {
@@ -282,13 +326,37 @@ export function useTransactions() {
 
   // CRUD actions
   const createTransaction = useCallback((newTx: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const tempId = `tx-${Date.now()}`
     const transaction: Transaction = {
       ...newTx,
-      id: `tx-${Date.now()}`,
+      id: tempId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
     setTransactions((prev) => [transaction, ...prev])
+
+    // Asynchronously sync to backend
+    apiClient.post('/transactions', {
+      type: newTx.type,
+      amountMinor: newTx.amountMinor,
+      transactionDate: newTx.transactionDate,
+      description: newTx.description,
+      payee: newTx.payee,
+      paymentMethod: newTx.paymentMethod,
+      notes: newTx.notes,
+      accountId: newTx.accountId,
+      categoryId: newTx.categoryId,
+      toAccountId: newTx.transferDestinationAccountId,
+    }).then((res) => {
+      if (res.data?.data?.transaction?.id) {
+        setTransactions((prev) =>
+          prev.map((t) => (t.id === tempId ? { ...t, id: res.data.data.transaction.id } : t))
+        )
+      }
+    }).catch(() => {
+      // Local transaction retained
+    })
+
     return transaction
   }, [])
 
@@ -300,6 +368,10 @@ export function useTransactions() {
           : tx
       )
     )
+
+    apiClient.patch(`/transactions/${id}`, updatedFields).catch(() => {
+      // Local changes retained
+    })
   }, [])
 
   const deleteTransaction = useCallback((id: string) => {
@@ -308,15 +380,47 @@ export function useTransactions() {
       deletedItem = prev.find((tx) => tx.id === id) || null
       return prev.filter((tx) => tx.id !== id)
     })
+
+    apiClient.delete(`/transactions/${id}`).catch(() => {
+      // Handled gracefully
+    })
+
     return deletedItem
   }, [])
 
   const restoreTransaction = useCallback((tx: Transaction) => {
     setTransactions((prev) => [tx, ...prev])
+    apiClient.post('/transactions', {
+      type: tx.type,
+      amountMinor: tx.amountMinor,
+      transactionDate: tx.transactionDate,
+      description: tx.description,
+      payee: tx.payee,
+      paymentMethod: tx.paymentMethod,
+      notes: tx.notes,
+      accountId: tx.accountId,
+      categoryId: tx.categoryId,
+    }).catch(() => {
+      // Local retained
+    })
   }, [])
 
   const bulkImportTransactions = useCallback((newItems: Transaction[]) => {
     setTransactions((prev) => [...newItems, ...prev])
+    // Sync each imported transaction
+    newItems.forEach((tx) => {
+      apiClient.post('/transactions', {
+        type: tx.type,
+        amountMinor: tx.amountMinor,
+        transactionDate: tx.transactionDate,
+        description: tx.description,
+        payee: tx.payee,
+        paymentMethod: tx.paymentMethod,
+        notes: tx.notes,
+        accountId: tx.accountId,
+        categoryId: tx.categoryId,
+      }).catch(() => {})
+    })
   }, [])
 
   const resetFilters = useCallback(() => {
@@ -342,6 +446,7 @@ export function useTransactions() {
 
   return {
     transactions,
+    isLoading,
     filteredTransactions,
     paginatedTransactions,
     metrics,
@@ -363,6 +468,7 @@ export function useTransactions() {
     deleteTransaction,
     restoreTransaction,
     bulkImportTransactions,
+    refreshTransactions: fetchTransactions,
   }
 }
 

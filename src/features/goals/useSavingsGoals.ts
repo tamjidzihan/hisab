@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { apiClient } from '@/lib/api'
 import type { SavingsGoal } from '@/types'
 
 export interface GoalContribution {
@@ -86,6 +87,56 @@ export function useSavingsGoals() {
   const [goals, setGoals] = useState<SavingsGoal[]>(INITIAL_GOALS)
   const [contributions, setContributions] = useState<GoalContribution[]>(INITIAL_CONTRIBUTIONS)
   const [statusFilter, setStatusFilter] = useState<GoalStatusFilter>('all')
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Fetch goals and contributions from backend
+  const fetchGoals = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const res = await apiClient.get<{ success: boolean; data: { goals: any[] } }>('/goals')
+      if (res.data?.data?.goals && Array.isArray(res.data.data.goals) && res.data.data.goals.length > 0) {
+        const mappedGoals: SavingsGoal[] = res.data.data.goals.map((g: any) => ({
+          id: g.id,
+          userId: g.userId,
+          name: g.name,
+          targetAmountMinor: Number(g.targetAmountMinor),
+          currentAmountMinor: Number(g.currentAmountMinor || 0),
+          targetDate: g.targetDate || undefined,
+          status: g.status || 'active',
+        }))
+
+        const allContribs: GoalContribution[] = []
+        res.data.data.goals.forEach((g: any) => {
+          if (Array.isArray(g.contributions)) {
+            g.contributions.forEach((c: any) => {
+              allContribs.push({
+                id: c.id,
+                goalId: g.id,
+                goalName: g.name,
+                amountMinor: Number(c.amountMinor),
+                date: c.contributionDate,
+                accountName: c.account?.name || undefined,
+                notes: c.note || undefined,
+              })
+            })
+          }
+        })
+
+        setGoals(mappedGoals)
+        if (allContribs.length > 0) {
+          setContributions(allContribs)
+        }
+      }
+    } catch {
+      // Retain fallback dataset
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchGoals()
+  }, [fetchGoals])
 
   const filteredGoals = useMemo(() => {
     return goals.filter((g) => {
@@ -129,12 +180,26 @@ export function useSavingsGoals() {
   // CRUD Actions
   const createGoal = useCallback(
     (newGoal: Omit<SavingsGoal, 'id' | 'userId'>) => {
+      const tempId = `goal-${Date.now()}`
       const goal: SavingsGoal = {
         ...newGoal,
-        id: `goal-${Date.now()}`,
+        id: tempId,
         userId: 'usr-1',
       }
       setGoals((prev) => [goal, ...prev])
+
+      apiClient.post('/goals', {
+        name: newGoal.name,
+        targetAmountMinor: newGoal.targetAmountMinor,
+        targetDate: newGoal.targetDate,
+      }).then((res) => {
+        if (res.data?.data?.goal?.id) {
+          setGoals((prev) =>
+            prev.map((g) => (g.id === tempId ? { ...g, id: res.data.data.goal.id } : g))
+          )
+        }
+      }).catch(() => {})
+
       return goal
     },
     []
@@ -144,11 +209,15 @@ export function useSavingsGoals() {
     setGoals((prev) =>
       prev.map((g) => (g.id === id ? { ...g, ...updates } : g))
     )
+
+    apiClient.patch(`/goals/${id}`, updates).catch(() => {})
   }, [])
 
   const deleteGoal = useCallback((id: string) => {
     setGoals((prev) => prev.filter((g) => g.id !== id))
     setContributions((prev) => prev.filter((c) => c.goalId !== id))
+
+    apiClient.delete(`/goals/${id}`).catch(() => {})
   }, [])
 
   const addContribution = useCallback(
@@ -190,6 +259,11 @@ export function useSavingsGoals() {
         })
       )
 
+      apiClient.post(`/goals/${goalId}/contributions`, {
+        amountMinor,
+        note: notes,
+      }).catch(() => {})
+
       return newContribution
     },
     [goals]
@@ -199,6 +273,7 @@ export function useSavingsGoals() {
     goals,
     filteredGoals,
     contributions,
+    isLoading,
     statusFilter,
     setStatusFilter,
     metrics,
@@ -206,6 +281,7 @@ export function useSavingsGoals() {
     updateGoal,
     deleteGoal,
     addContribution,
+    refreshGoals: fetchGoals,
   }
 }
 
