@@ -32,9 +32,10 @@ const NAV_ITEMS: NavItem[] = [
 export interface SidebarProps {
   isOpen: boolean
   onClose: () => void
+  onOpenTourGuide?: () => void
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpenTourGuide }) => {
   return (
     <>
       {/* Mobile Backdrop Overlay */}
@@ -108,19 +109,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </nav>
         </div>
 
-        {/* Sidebar Footer info */}
-        <div className="p-4 border-t border-[#e5eaf0] bg-[#fafbfd] text-xs">
-          <div className="flex items-center justify-between text-[#64748b] font-mono text-[11px] mb-1">
-            <span>CURRENCY</span>
-            <span className="font-semibold text-[#161d26]">BDT (৳)</span>
+        {/* Bottom Section: Tour Guide Trigger & Currency specs */}
+        <div>
+          {/* Tour Guide Action */}
+          <div className="px-3 py-2 border-t border-[#e5eaf0]">
+            <button
+              type="button"
+              onClick={() => {
+                onClose()
+                if (onOpenTourGuide) onOpenTourGuide()
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-[4px] text-xs font-medium text-[#161d26] bg-[#f8fafc] hover:bg-[#f1f5f9] border border-[#d2d9e4] transition-colors cursor-pointer"
+            >
+              <Compass className="w-4 h-4 text-[#d97706] shrink-0" />
+              <span className="font-mono text-xs font-semibold">Tour Guide &amp; How-To</span>
+            </button>
           </div>
-          <div className="flex items-center justify-between text-[#64748b] font-mono text-[11px]">
-            <span>PRECISION</span>
-            <span className="text-[#059669] font-medium">Integer Paisa</span>
+
+          {/* Sidebar Footer info */}
+          <div className="p-4 border-t border-[#e5eaf0] bg-[#fafbfd] text-xs">
+            <div className="flex items-center justify-between text-[#64748b] font-mono text-[11px] mb-1">
+              <span>CURRENCY</span>
+              <span className="font-semibold text-[#161d26]">BDT (৳)</span>
+            </div>
+            <div className="flex items-center justify-between text-[#64748b] font-mono text-[11px]">
+              <span>PRECISION</span>
+              <span className="text-[#059669] font-medium">Integer Paisa</span>
+            </div>
           </div>
         </div>
       </aside>
     </>
   )
 }
-
