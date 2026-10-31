@@ -6,7 +6,9 @@ export interface CaliperProgressProps extends React.HTMLAttributes<HTMLDivElemen
   max: number   // Budget limit e.g. total budget
   showNotches?: boolean
   showPercentageLabel?: boolean
-  height?: 'sm' | 'md'
+  warningThreshold?: number // e.g. 0.8 for 80%
+  limitThreshold?: number   // e.g. 1.0 for 100%
+  height?: 'sm' | 'md' | 'lg'
 }
 
 export const CaliperProgress: React.FC<CaliperProgressProps> = ({
@@ -15,6 +17,8 @@ export const CaliperProgress: React.FC<CaliperProgressProps> = ({
   max,
   showNotches = true,
   showPercentageLabel = false,
+  warningThreshold = 0.8,
+  limitThreshold = 1.0,
   height = 'md',
   ...props
 }) => {
@@ -22,8 +26,8 @@ export const CaliperProgress: React.FC<CaliperProgressProps> = ({
   const clampedPercentage = Math.min(Math.max(percentage, 0), 100)
 
   // Color dynamics based on caliper thresholds
-  const isOverBudget = percentage >= 100
-  const isWarning = percentage >= 80 && percentage < 100
+  const isOverBudget = percentage >= limitThreshold * 100
+  const isWarning = percentage >= warningThreshold * 100 && percentage < limitThreshold * 100
 
   const barColor = isOverBudget
     ? 'bg-[#dc2626]'
@@ -31,8 +35,8 @@ export const CaliperProgress: React.FC<CaliperProgressProps> = ({
     ? 'bg-[#d97706]'
     : 'bg-[#059669]'
 
-  const barHeight = height === 'sm' ? 'h-2' : 'h-3'
-  const notchHeight = height === 'sm' ? '-top-1 h-4' : '-top-1.5 h-6'
+  const barHeight = height === 'sm' ? 'h-2' : height === 'lg' ? 'h-4' : 'h-3'
+  const notchHeight = height === 'sm' ? '-top-1 h-4' : height === 'lg' ? '-top-1.5 h-7' : '-top-1.5 h-6'
 
   return (
     <div className={cn('w-full flex flex-col gap-1', className)} {...props}>
@@ -56,30 +60,30 @@ export const CaliperProgress: React.FC<CaliperProgressProps> = ({
         {/* Dimension Caliper Notches */}
         {showNotches && (
           <>
-            {/* 80% Warning Caliper Notch */}
+            {/* Warning Caliper Notch */}
             <div
               className={cn(
                 'absolute w-[2px] bg-[#d97706] z-10 transition-opacity',
                 notchHeight
               )}
-              style={{ left: '80%' }}
-              title="80% Warning Caliper"
+              style={{ left: `${warningThreshold * 100}%` }}
+              title={`${Math.round(warningThreshold * 100)}% Warning Caliper`}
               aria-hidden="true"
             >
-              <span className="sr-only">80% threshold</span>
+              <span className="sr-only">{Math.round(warningThreshold * 100)}% threshold</span>
             </div>
 
-            {/* 100% Hard Limit Caliper Notch */}
+            {/* Hard Limit Caliper Notch */}
             <div
               className={cn(
                 'absolute w-[2px] bg-[#dc2626] z-10 transition-opacity',
                 notchHeight
               )}
-              style={{ left: '100%', transform: 'translateX(-2px)' }}
-              title="100% Hard Limit Caliper"
+              style={{ left: `${Math.min(limitThreshold * 100, 100)}%`, transform: 'translateX(-2px)' }}
+              title={`${Math.round(limitThreshold * 100)}% Hard Limit Caliper`}
               aria-hidden="true"
             >
-              <span className="sr-only">100% limit</span>
+              <span className="sr-only">{Math.round(limitThreshold * 100)}% limit</span>
             </div>
           </>
         )}
