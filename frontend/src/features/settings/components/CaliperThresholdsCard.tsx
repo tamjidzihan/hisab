@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { Card } from '@/components/common/Card'
 import { Button } from '@/components/common/Button'
+import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
+import { Badge } from '@/components/common/Badge'
 import { CaliperProgress } from '@/components/common/CaliperProgress'
 import { formatCurrency } from '@/lib/formatters'
 import { toast } from 'sonner'
@@ -46,68 +48,89 @@ export const CaliperThresholdsCard: React.FC<CaliperThresholdsCardProps> = ({
       lowBalanceThresholdMinor: lowBalanceMinor,
     })
     setHasChanges(false)
-    toast.success('Budget caliper tolerances and alert rules updated')
+    toast.success('Budget caliper tolerances and notification triggers updated')
   }
 
   return (
-    <Card className="space-y-6">
-      <div className="flex items-center justify-between pb-3 border-b border-[#e5eaf0]">
-        <div className="flex items-center gap-2">
-          <Sliders className="w-4 h-4 text-[#161d26]" />
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#161d26] font-mono">
-            Dimension Calipers & Alert Thresholds
-          </h2>
+    <Card
+      header={
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-[#161d26]" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#161d26] font-mono">
+              Dimension Calipers & Alert Thresholds
+            </h2>
+          </div>
+          <Badge variant="warning" size="sm">
+            <AlertTriangle className="w-3 h-3 mr-1" /> Dynamic Tolerances Active
+          </Badge>
         </div>
-        <span className="text-xs font-mono text-[#d97706] flex items-center gap-1 font-semibold">
-          <AlertTriangle className="w-3.5 h-3.5" /> Drafting Tolerances Active
-        </span>
-      </div>
+      }
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <span className="text-xs text-[#64748b] font-mono">
+            {hasChanges ? '● Unsaved caliper notch changes' : 'Tolerances calibrated to ledger'}
+          </span>
+          <Button
+            type="submit"
+            form="caliper-thresholds-form"
+            variant="primary"
+            size="sm"
+            disabled={!hasChanges}
+            leftIcon={<Save className="w-3.5 h-3.5" />}
+          >
+            Save Caliper Rules
+          </Button>
+        </div>
+      }
+    >
+      <form id="caliper-thresholds-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Live Caliper Preview Simulation */}
+        <div className="bg-[#f8fafc] border border-[#d2d9e4] p-4 rounded-[4px] space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748b] font-semibold">
+              Live Caliper Simulation (Simulated ৳82,000 / ৳100,000 Budget)
+            </span>
+            <span className="text-xs font-mono font-bold text-[#161d26] tabular-nums">
+              82.0% Consumed
+            </span>
+          </div>
 
-      {/* Live Caliper Preview */}
-      <div className="bg-[#f8fafc] border border-[#d2d9e4] p-4 rounded-[4px] space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748b] font-semibold">
-            Interactive Caliper Simulation (Simulated ৳82,000 / ৳100,000 Budget)
-          </span>
-          <span className="text-xs font-mono font-bold text-[#161d26]">
-            82.0% Consumed
-          </span>
+          <CaliperProgress
+            value={8200000}
+            max={10000000}
+            warningThreshold={warningThreshold / 100}
+            limitThreshold={limitThreshold / 100}
+            showNotches={true}
+            height="lg"
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] font-mono text-[#64748b] pt-1">
+            <span className="inline-flex items-center gap-1.5 text-[#059669]">
+              <span className="w-2 h-2 rounded-full bg-[#059669]" />
+              Nominal Inflow (0% – {warningThreshold}%)
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[#d97706]">
+              <span className="w-2 h-2 rounded-full bg-[#d97706]" />
+              Warning Caliper ({warningThreshold}%)
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[#dc2626]">
+              <span className="w-2 h-2 rounded-full bg-[#dc2626]" />
+              Hard Limit Caliper ({limitThreshold}%)
+            </span>
+          </div>
         </div>
 
-        <CaliperProgress
-          value={8200000}
-          max={10000000}
-          warningThreshold={warningThreshold / 100}
-          limitThreshold={limitThreshold / 100}
-          showNotches={true}
-          height="lg"
-        />
-
-        <div className="flex items-center justify-between text-[11px] font-mono text-[#64748b] pt-1">
-          <span className="inline-flex items-center gap-1.5 text-[#059669]">
-            <span className="w-2 h-2 rounded-full bg-[#059669]" />
-            Nominal Inflow (0% – {warningThreshold}%)
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-[#d97706]">
-            <span className="w-2 h-2 rounded-full bg-[#d97706]" />
-            Warning Caliper ({warningThreshold}%)
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-[#dc2626]">
-            <span className="w-2 h-2 rounded-full bg-[#dc2626]" />
-            Hard Limit Caliper ({limitThreshold}%)
-          </span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Sliders for Caliper Thresholds */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="space-y-2">
+        {/* Caliper Sliders in Balanced Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="p-3.5 border border-[#d2d9e4] rounded-[4px] bg-white space-y-2.5">
             <div className="flex items-center justify-between text-xs font-mono">
               <label htmlFor="warning-slider" className="font-semibold text-[#161d26]">
                 Warning Caliper Notch
               </label>
-              <span className="font-bold text-[#d97706]">{warningThreshold}%</span>
+              <span className="font-bold text-sm text-[#d97706] tabular-nums bg-[#fffbeb] px-2 py-0.5 rounded border border-[#fde68a]">
+                {warningThreshold}%
+              </span>
             </div>
             <input
               id="warning-slider"
@@ -120,19 +143,21 @@ export const CaliperThresholdsCard: React.FC<CaliperThresholdsCardProps> = ({
                 setWarningThreshold(Number(e.target.value))
                 setHasChanges(true)
               }}
-              className="w-full accent-[#d97706] cursor-pointer"
+              className="w-full accent-[#d97706] cursor-pointer h-2 bg-[#f1f5f9] rounded-lg"
             />
-            <p className="text-[11px] text-[#64748b]">
-              Notch where progress changes to amber warning tone across all category budgets.
+            <p className="text-[11px] text-[#64748b] leading-relaxed">
+              Triggers amber warning badges across category budgets when spending reaches this ratio.
             </p>
           </div>
 
-          <div className="space-y-2">
+          <div className="p-3.5 border border-[#d2d9e4] rounded-[4px] bg-white space-y-2.5">
             <div className="flex items-center justify-between text-xs font-mono">
               <label htmlFor="limit-slider" className="font-semibold text-[#161d26]">
                 Hard Limit Caliper Notch
               </label>
-              <span className="font-bold text-[#dc2626]">{limitThreshold}%</span>
+              <span className="font-bold text-sm text-[#dc2626] tabular-nums bg-[#fef2f2] px-2 py-0.5 rounded border border-[#fecaca]">
+                {limitThreshold}%
+              </span>
             </div>
             <input
               id="limit-slider"
@@ -145,18 +170,18 @@ export const CaliperThresholdsCard: React.FC<CaliperThresholdsCardProps> = ({
                 setLimitThreshold(Number(e.target.value))
                 setHasChanges(true)
               }}
-              className="w-full accent-[#dc2626] cursor-pointer"
+              className="w-full accent-[#dc2626] cursor-pointer h-2 bg-[#f1f5f9] rounded-lg"
             />
-            <p className="text-[11px] text-[#64748b]">
-              Threshold where budget triggers high-priority limit crimson alerts.
+            <p className="text-[11px] text-[#64748b] leading-relaxed">
+              Triggers high-priority Limit Crimson alerts when spending exceeds this ceiling.
             </p>
           </div>
         </div>
 
         {/* Lead Days and Low Balance */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#e5eaf0]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-1">
           <Select
-            label="Recurring Obligation Lead Reminder"
+            label="Bill Reminder Lead Notice"
             value={String(leadDays)}
             onChange={(e) => {
               setLeadDays(Number(e.target.value))
@@ -171,40 +196,31 @@ export const CaliperThresholdsCard: React.FC<CaliperThresholdsCardProps> = ({
             ]}
           />
 
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-[#161d26] block">
-              Low Account Liquidity Alert (BDT)
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-[#64748b]">
-                ৳
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="500"
-                value={lowBalanceAmountStr}
-                onChange={(e) => {
-                  setLowBalanceAmountStr(e.target.value)
-                  setHasChanges(true)
-                }}
-                className="w-full pl-7 pr-3 py-1.5 text-xs font-mono rounded-[3px] border border-[#d2d9e4] bg-white focus:outline-none focus:border-[#161d26]"
-              />
-            </div>
-            <span className="text-[10px] text-[#64748b] font-mono">
-              Notify when account drops below {formatCurrency(Number(lowBalanceAmountStr || 0) * 100)}
-            </span>
-          </div>
+          <Input
+            label="Low Account Liquidity Watchdog"
+            type="number"
+            min="0"
+            step="500"
+            prefixElement={<span className="font-mono text-xs font-semibold text-[#64748b]">৳</span>}
+            value={lowBalanceAmountStr}
+            onChange={(e) => {
+              setLowBalanceAmountStr(e.target.value)
+              setHasChanges(true)
+            }}
+            helperText={`Alert dispatched when any account drops below ${formatCurrency(
+              Number(lowBalanceAmountStr || 0) * 100
+            )}.`}
+          />
         </div>
 
         {/* Checkbox Notification Rules */}
-        <div className="space-y-3 pt-2 border-t border-[#e5eaf0]">
+        <div className="space-y-3 pt-3 border-t border-[#e5eaf0]">
           <h3 className="text-xs font-bold text-[#161d26] uppercase font-mono tracking-wider flex items-center gap-1.5">
-            <Bell className="w-3.5 h-3.5 text-[#161d26]" /> Notification Dispatch Rules
+            <Bell className="w-3.5 h-3.5 text-[#161d26]" /> Notification Dispatch Triggers
           </h3>
 
-          <div className="space-y-2">
-            <label className="flex items-start gap-2.5 text-xs text-[#161d26] cursor-pointer">
+          <div className="space-y-3">
+            <label className="flex items-start gap-3 text-xs text-[#161d26] cursor-pointer p-2.5 rounded-[4px] hover:bg-[#f8fafc] border border-transparent hover:border-[#e2e8f0] transition-colors">
               <input
                 type="checkbox"
                 checked={enableCaliperNotices}
@@ -212,17 +228,17 @@ export const CaliperThresholdsCard: React.FC<CaliperThresholdsCardProps> = ({
                   setEnableCaliperNotices(e.target.checked)
                   setHasChanges(true)
                 }}
-                className="mt-0.5 rounded-[3px] text-[#161d26] accent-[#161d26] cursor-pointer"
+                className="mt-0.5 rounded-[3px] accent-[#161d26] cursor-pointer w-4 h-4"
               />
-              <div>
-                <span className="font-semibold block">Budget Caliper Breach Notifications</span>
-                <span className="text-[11px] text-[#64748b]">
-                  Dispatch alert when any spending category crosses the 80% warning or 100% hard limit.
+              <div className="space-y-0.5">
+                <span className="font-semibold block text-[#161d26]">Budget Caliper Threshold Alerts</span>
+                <span className="text-[11px] text-[#64748b] leading-relaxed block">
+                  Surface alerts in the notification bell whenever a category crosses the 80% warning or 100% hard limit.
                 </span>
               </div>
             </label>
 
-            <label className="flex items-start gap-2.5 text-xs text-[#161d26] cursor-pointer">
+            <label className="flex items-start gap-3 text-xs text-[#161d26] cursor-pointer p-2.5 rounded-[4px] hover:bg-[#f8fafc] border border-transparent hover:border-[#e2e8f0] transition-colors">
               <input
                 type="checkbox"
                 checked={enableNegativeCashFlowAlerts}
@@ -230,17 +246,17 @@ export const CaliperThresholdsCard: React.FC<CaliperThresholdsCardProps> = ({
                   setEnableNegativeCashFlowAlerts(e.target.checked)
                   setHasChanges(true)
                 }}
-                className="mt-0.5 rounded-[3px] text-[#161d26] accent-[#161d26] cursor-pointer"
+                className="mt-0.5 rounded-[3px] accent-[#161d26] cursor-pointer w-4 h-4"
               />
-              <div>
-                <span className="font-semibold block">Negative Cash Flow Deficit Warning</span>
-                <span className="text-[11px] text-[#64748b]">
-                  Alert when current month cumulative expenses surpass verified income inflows.
+              <div className="space-y-0.5">
+                <span className="font-semibold block text-[#161d26]">Negative Cash Flow Deficit Warning</span>
+                <span className="text-[11px] text-[#64748b] leading-relaxed block">
+                  Notify immediately when cumulative monthly outflows surpass verified income inflows.
                 </span>
               </div>
             </label>
 
-            <label className="flex items-start gap-2.5 text-xs text-[#161d26] cursor-pointer">
+            <label className="flex items-start gap-3 text-xs text-[#161d26] cursor-pointer p-2.5 rounded-[4px] hover:bg-[#f8fafc] border border-transparent hover:border-[#e2e8f0] transition-colors">
               <input
                 type="checkbox"
                 checked={enableLowBalanceAlerts}
@@ -248,32 +264,16 @@ export const CaliperThresholdsCard: React.FC<CaliperThresholdsCardProps> = ({
                   setEnableLowBalanceAlerts(e.target.checked)
                   setHasChanges(true)
                 }}
-                className="mt-0.5 rounded-[3px] text-[#161d26] accent-[#161d26] cursor-pointer"
+                className="mt-0.5 rounded-[3px] accent-[#161d26] cursor-pointer w-4 h-4"
               />
-              <div>
-                <span className="font-semibold block">Account Minimum Balance Watchdog</span>
-                <span className="text-[11px] text-[#64748b]">
-                  Flag accounts approaching zero liquidity or safety minimum reserve.
+              <div className="space-y-0.5">
+                <span className="font-semibold block text-[#161d26]">Account Minimum Balance Watchdog</span>
+                <span className="text-[11px] text-[#64748b] leading-relaxed block">
+                  Flag accounts approaching zero liquidity or minimum safety reserve thresholds.
                 </span>
               </div>
             </label>
           </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-2 border-t border-[#e5eaf0]">
-          <span className="text-xs text-[#64748b] font-mono">
-            {hasChanges ? 'Unsaved caliper changes' : 'Tolerances calibrated'}
-          </span>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            disabled={!hasChanges}
-            className="flex items-center gap-1.5"
-          >
-            <Save className="w-4 h-4" />
-            <span>Save Caliper Rules</span>
-          </Button>
         </div>
       </form>
     </Card>

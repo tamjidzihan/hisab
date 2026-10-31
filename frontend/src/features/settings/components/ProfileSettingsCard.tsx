@@ -21,13 +21,14 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
   const [householdName, setHouseholdName] = useState(profile.householdName)
   const [hasChanges, setHasChanges] = useState(false)
 
-  const initials = name
-    .split(' ')
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase() || 'HB'
+  const initials =
+    name
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase() || 'HB'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,50 +47,71 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
       householdName: householdName.trim() || 'Personal Ledger',
     })
     setHasChanges(false)
-    toast.success('User identity & ledger profile updated')
+    toast.success('User identity and ledger profile saved')
   }
 
   return (
-    <Card className="space-y-6">
-      <div className="flex items-center justify-between pb-3 border-b border-[#e5eaf0]">
-        <div className="flex items-center gap-2">
-          <User className="w-4 h-4 text-[#161d26]" />
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#161d26] font-mono">
-            User Identity & Ledger Controller
-          </h2>
-        </div>
-        <Badge variant="inflow" size="sm">
-          <ShieldCheck className="w-3 h-3 mr-1" /> Verified
-        </Badge>
-      </div>
-
-      {/* Avatar Monogram & Metadata Header */}
-      <div className="flex items-center gap-4 bg-[#f8fafc] p-4 rounded-[4px] border border-[#d2d9e4]">
-        <div className="w-14 h-14 rounded-[4px] bg-[#161d26] text-white flex items-center justify-center font-mono font-bold text-lg tracking-wider border border-[#0f172a] shadow-xs">
-          {initials}
-        </div>
-
-        <div className="space-y-1">
+    <Card
+      header={
+        <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-[#161d26]">{name}</span>
-            <span className="text-[11px] font-mono text-[#64748b]">({profile.role})</span>
+            <User className="w-4 h-4 text-[#161d26]" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#161d26] font-mono">
+              User Identity & Ledger Controller
+            </h2>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-[#64748b]">
-            <span className="inline-flex items-center gap-1">
-              <Hash className="w-3 h-3 text-[#64748b]" /> {profile.userId}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-[#64748b]" /> Member since {profile.joinedDate}
-            </span>
+          <Badge variant="inflow" size="sm">
+            <ShieldCheck className="w-3 h-3 mr-1" /> Verified Controller
+          </Badge>
+        </div>
+      }
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <span className="text-xs text-[#64748b] font-mono">
+            {hasChanges ? '● Unsaved profile modifications' : 'Profile in sync with ledger'}
+          </span>
+          <Button
+            type="submit"
+            form="profile-settings-form"
+            variant="primary"
+            size="sm"
+            disabled={!hasChanges}
+            leftIcon={<Save className="w-3.5 h-3.5" />}
+          >
+            Save Profile
+          </Button>
+        </div>
+      }
+    >
+      <form id="profile-settings-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Avatar Monogram & Metadata Header */}
+        <div className="flex items-center gap-4 bg-[#f8fafc] p-4 rounded-[4px] border border-[#d2d9e4]">
+          <div className="w-14 h-14 rounded-[4px] bg-[#161d26] text-white flex items-center justify-center font-mono font-bold text-lg tracking-wider border border-[#0f172a] shrink-0">
+            {initials}
+          </div>
+
+          <div className="space-y-1.5 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-sm text-[#161d26]">{name}</span>
+              <span className="text-[11px] font-mono text-[#64748b] bg-white px-2 py-0.5 rounded border border-[#d2d9e4]">
+                {profile.role}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#64748b]">
+              <span className="inline-flex items-center gap-1">
+                <Hash className="w-3 h-3 text-[#94a3b8]" /> {profile.userId}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-[#94a3b8]" /> Enrolled: {profile.joinedDate}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Form Fields */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Input Fields Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Input
-            label="Full Name"
+            label="Full Legal Name"
             value={name}
             onChange={(e) => {
               setName(e.target.value)
@@ -113,33 +135,16 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
         </div>
 
         <Input
-          label="Household / Ledger Title"
+          label="Household / Ledger Moniker"
           value={householdName}
           onChange={(e) => {
             setHouseholdName(e.target.value)
             setHasChanges(true)
           }}
           placeholder="e.g. Chowdhury Household Ledger"
-          helperText="Identifies this ledger on exports and summary financial statements."
+          helperText="Displayed on financial exports and official PDF summary statements."
         />
-
-        <div className="flex items-center justify-between pt-2 border-t border-[#e5eaf0]">
-          <span className="text-xs text-[#64748b] font-mono">
-            {hasChanges ? 'Unsaved profile edits pending' : 'Profile synchronized'}
-          </span>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            disabled={!hasChanges}
-            className="flex items-center gap-1.5"
-          >
-            <Save className="w-4 h-4" />
-            <span>Save Profile</span>
-          </Button>
-        </div>
       </form>
     </Card>
   )
 }
-

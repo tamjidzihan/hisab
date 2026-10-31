@@ -57,141 +57,145 @@ export const SecuritySessionsCard: React.FC<SecuritySessionsCardProps> = ({
   }
 
   const getDeviceIcon = (device: string) => {
-    if (device.toLowerCase().includes('phone')) return <Smartphone className="w-4 h-4" />
+    if (device.toLowerCase().includes('phone')) return <Smartphone className="w-4 h-4 text-[#161d26]" />
     if (device.toLowerCase().includes('ipad') || device.toLowerCase().includes('tablet'))
-      return <Tablet className="w-4 h-4" />
-    return <Laptop className="w-4 h-4" />
+      return <Tablet className="w-4 h-4 text-[#161d26]" />
+    return <Laptop className="w-4 h-4 text-[#161d26]" />
   }
 
   return (
-    <Card className="space-y-6">
-      <div className="flex items-center justify-between pb-3 border-b border-[#e5eaf0]">
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-[#161d26]" />
-          <h2 className="text-sm font-bold uppercase tracking-wider text-[#161d26] font-mono">
-            Security, Credentials & Active Sessions
-          </h2>
-        </div>
-        <Badge variant="inflow" size="sm">
-          <Lock className="w-3 h-3 mr-1" /> Multi-Factor Active
-        </Badge>
-      </div>
-
-      {/* Password & Session Lock Controls */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-4 rounded-[4px] border border-[#d2d9e4] bg-[#f8fafc] flex flex-col justify-between space-y-3">
-          <div>
-            <span className="text-xs font-bold text-[#161d26] font-mono uppercase block">
-              Master Access Passphrase
-            </span>
-            <p className="text-[11px] text-[#64748b] mt-1">
-              Secures your encrypted financial ledger and export credentials.
-            </p>
+    <Card
+      header={
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-[#161d26]" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#161d26] font-mono">
+              Security, Credentials & Active Sessions
+            </h2>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsPasswordModalOpen(true)}
-            className="flex items-center justify-center gap-1.5"
-          >
-            <KeyRound className="w-4 h-4 text-[#161d26]" />
-            <span>Update Master Passphrase</span>
-          </Button>
+          <Badge variant="inflow" size="sm">
+            <Lock className="w-3 h-3 mr-1" /> Multi-Factor Active
+          </Badge>
         </div>
-
-        <div className="p-4 rounded-[4px] border border-[#d2d9e4] bg-[#f8fafc] flex flex-col justify-between space-y-3">
-          <div>
-            <span className="text-xs font-bold text-[#161d26] font-mono uppercase block">
-              Automated Session Idle Timeout
-            </span>
-            <p className="text-[11px] text-[#64748b] mt-1">
-              Automatically locks the workspace window after a period of user inactivity.
-            </p>
-          </div>
-          <Select
-            label=""
-            value={idleLockTime}
-            onChange={(e) => {
-              setIdleLockTime(e.target.value)
-              toast.success(`Session timeout updated to ${e.target.value} minutes`)
-            }}
-            options={[
-              { value: '15', label: 'Lock after 15 minutes of inactivity' },
-              { value: '30', label: 'Lock after 30 minutes of inactivity' },
-              { value: '60', label: 'Lock after 1 hour of inactivity' },
-              { value: 'never', label: 'Never lock automatically (Not recommended)' },
-            ]}
-          />
-        </div>
-      </div>
-
-      {/* Active Sessions List */}
-      <div className="space-y-3 pt-2 border-t border-[#e5eaf0]">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold text-[#161d26] uppercase font-mono tracking-wider">
-            Active Connected Devices ({sessions.length})
-          </h3>
-          <span className="text-[11px] font-mono text-[#64748b]">
-            Audited against authenticated token signatures
-          </span>
-        </div>
-
-        <div className="divide-y divide-[#e5eaf0] border border-[#d2d9e4] rounded-[4px] overflow-hidden bg-white">
-          {sessions.map((sess) => (
-            <div
-              key={sess.id}
-              className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#f8fafc] transition-colors"
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-[3px] bg-[#f1f5f9] text-[#161d26] border border-[#d2d9e4]">
-                  {getDeviceIcon(sess.device)}
-                </div>
-
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-[#161d26]">{sess.device}</span>
-                    {sess.isCurrent ? (
-                      <Badge variant="inflow" size="sm">
-                        CURRENT DEVICE
-                      </Badge>
-                    ) : (
-                      <Badge variant="neutral" size="sm">
-                        REMOTE
-                      </Badge>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-[#64748b] font-mono">{sess.browser}</p>
-
-                  <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-[#64748b] pt-0.5">
-                    <span className="inline-flex items-center gap-1">
-                      <Globe className="w-3 h-3 text-[#64748b]" /> {sess.location} ({sess.ipAddress})
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-[#64748b]" /> {sess.lastActive}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {!sess.isCurrent && (
-                <div className="sm:self-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      onTerminateSession(sess.id)
-                      toast.success(`Session on ${sess.device} revoked`)
-                    }}
-                    className="text-xs text-[#dc2626] hover:bg-[#fef2f2] hover:border-[#dc2626] flex items-center gap-1"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    <span>Revoke Access</span>
-                  </Button>
-                </div>
-              )}
+      }
+    >
+      <div className="space-y-6">
+        {/* Passphrase & Session Lock Controls Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="p-4 rounded-[4px] border border-[#d2d9e4] bg-[#f8fafc] flex flex-col justify-between space-y-4">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[#161d26] font-mono uppercase block">
+                Master Access Passphrase
+              </span>
+              <p className="text-[11px] text-[#64748b] leading-relaxed">
+                Secures your encrypted local financial database and cold export decryption keys.
+              </p>
             </div>
-          ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="w-full justify-center"
+              leftIcon={<KeyRound className="w-3.5 h-3.5 text-[#161d26]" />}
+            >
+              Update Master Passphrase
+            </Button>
+          </div>
+
+          <div className="p-4 rounded-[4px] border border-[#d2d9e4] bg-[#f8fafc] flex flex-col justify-between space-y-4">
+            <div className="space-y-1.5">
+              <span className="text-xs font-bold text-[#161d26] font-mono uppercase block">
+                Session Inactivity Timeout
+              </span>
+              <p className="text-[11px] text-[#64748b] leading-relaxed">
+                Automatically secures the workspace window after a specified duration of user inactivity.
+              </p>
+            </div>
+            <Select
+              label=""
+              value={idleLockTime}
+              onChange={(e) => {
+                setIdleLockTime(e.target.value)
+                toast.success(`Session timeout updated to ${e.target.value} minutes`)
+              }}
+              options={[
+                { value: '15', label: 'Lock after 15 minutes' },
+                { value: '30', label: 'Lock after 30 minutes (Standard)' },
+                { value: '60', label: 'Lock after 1 hour' },
+                { value: 'never', label: 'Never lock automatically' },
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* Active Connected Devices List */}
+        <div className="space-y-3 pt-2 border-t border-[#e5eaf0]">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-[#161d26] uppercase font-mono tracking-wider">
+              Connected Devices ({sessions.length})
+            </h3>
+            <span className="text-[11px] font-mono text-[#64748b]">
+              Validated against signed session tokens
+            </span>
+          </div>
+
+          <div className="divide-y divide-[#e5eaf0] border border-[#d2d9e4] rounded-[4px] overflow-hidden bg-white">
+            {sessions.map((sess) => (
+              <div
+                key={sess.id}
+                className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-[#f8fafc] transition-colors"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-[3px] bg-[#f1f5f9] text-[#161d26] border border-[#d2d9e4] shrink-0">
+                    {getDeviceIcon(sess.device)}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-[#161d26]">{sess.device}</span>
+                      {sess.isCurrent ? (
+                        <Badge variant="inflow" size="sm">
+                          THIS DEVICE
+                        </Badge>
+                      ) : (
+                        <Badge variant="neutral" size="sm">
+                          REMOTE
+                        </Badge>
+                      )}
+                    </div>
+
+                    <p className="text-[11px] text-[#64748b] font-mono">{sess.browser}</p>
+
+                    <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-[#64748b]">
+                      <span className="inline-flex items-center gap-1">
+                        <Globe className="w-3 h-3 text-[#94a3b8]" /> {sess.location} ({sess.ipAddress})
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-[#94a3b8]" /> {sess.lastActive}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {!sess.isCurrent && (
+                  <div className="sm:self-center shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        onTerminateSession(sess.id)
+                        toast.success(`Session on ${sess.device} revoked`)
+                      }}
+                      className="text-xs text-[#dc2626] hover:bg-[#fef2f2] hover:border-[#dc2626]"
+                      leftIcon={<LogOut className="w-3.5 h-3.5" />}
+                    >
+                      Revoke
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -247,4 +251,3 @@ export const SecuritySessionsCard: React.FC<SecuritySessionsCardProps> = ({
     </Card>
   )
 }
-
