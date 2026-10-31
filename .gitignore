@@ -18,8 +18,11 @@ coverage/
 logs/
 
 # User uploads and local data
+*.sqlite
+*.sqlite3
+backend/database.sqlite
 backend/src/uploads/*
-!backend/src/uploads/.gitkeep
+!.backend/src/uploads/.gitkeep
 uploads/
 
 # OS / IDE

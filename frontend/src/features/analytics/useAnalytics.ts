@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { apiClient } from '@/lib/api'
 
 export type AnalyticsTimeRange = '6m' | '12m' | 'ytd' | 'month'
 
@@ -81,22 +82,70 @@ const TOP_EXPENSES_DATA: TopExpenseItem[] = [
 
 export function useAnalytics() {
   const [timeRange, setTimeRange] = useState<AnalyticsTimeRange>('6m')
+  const [monthlyTrend, setMonthlyTrend] = useState<MonthlyTrendDataPoint[]>(HISTORICAL_MONTHLY_DATA)
+  const [categoryShare, setCategoryShare] = useState<CategoryShareDataPoint[]>(CATEGORY_SHARE_DATA)
+  const [budgetPerformance, setBudgetPerformance] = useState<BudgetPerformanceDataPoint[]>(BUDGET_PERFORMANCE_DATA)
+  const [topExpenses, setTopExpenses] = useState<TopExpenseItem[]>(TOP_EXPENSES_DATA)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const [trendRes, catRes, bgtRes, topRes] = await Promise.all([
+        apiClient.get<{ success: boolean; data: { trend: MonthlyTrendDataPoint[] } }>('/analytics/monthly-trend?months=12').catch(() => null),
+        apiClient.get<{ success: boolean; data: { categories: any[] } }>('/analytics/category-breakdown').catch(() => null),
+        apiClient.get<{ success: boolean; data: { performance: BudgetPerformanceDataPoint[] } }>('/analytics/budget-performance').catch(() => null),
+        apiClient.get<{ success: boolean; data: { topExpenses: TopExpenseItem[] } }>('/analytics/top-expenses?limit=10').catch(() => null),
+      ])
+
+      if (trendRes?.data?.data?.trend && Array.isArray(trendRes.data.data.trend) && trendRes.data.data.trend.length > 0) {
+        setMonthlyTrend(trendRes.data.data.trend)
+      }
+
+      if (catRes?.data?.data?.categories && Array.isArray(catRes.data.data.categories) && catRes.data.data.categories.length > 0) {
+        setCategoryShare(catRes.data.data.categories.map((c: any) => ({
+          categoryId: c.categoryId,
+          categoryName: c.categoryName,
+          categoryColor: c.categoryColor,
+          spentMinor: Number(c.spentMinor),
+          percentage: Number(c.percentage),
+          previousMonthSpentMinor: Number(c.previousMonthSpentMinor || c.spentMinor),
+        })))
+      }
+
+      if (bgtRes?.data?.data?.performance && Array.isArray(bgtRes.data.data.performance) && bgtRes.data.data.performance.length > 0) {
+        setBudgetPerformance(bgtRes.data.data.performance)
+      }
+
+      if (topRes?.data?.data?.topExpenses && Array.isArray(topRes.data.data.topExpenses) && topRes.data.data.topExpenses.length > 0) {
+        setTopExpenses(topRes.data.data.topExpenses)
+      }
+    } catch {
+      // Retain fallback dataset
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [fetchAnalytics])
 
   // Filtered monthly trend data
   const filteredTrend = useMemo(() => {
     switch (timeRange) {
       case '6m':
-        return HISTORICAL_MONTHLY_DATA.slice(-6)
+        return monthlyTrend.slice(-6)
       case '12m':
-        return HISTORICAL_MONTHLY_DATA.slice(-12)
+        return monthlyTrend.slice(-12)
       case 'ytd':
-        return HISTORICAL_MONTHLY_DATA.filter((d) => d.month.startsWith('2026'))
+        return monthlyTrend.filter((d) => d.month.startsWith('2026'))
       case 'month':
-        return HISTORICAL_MONTHLY_DATA.slice(-1)
+        return monthlyTrend.slice(-1)
       default:
-        return HISTORICAL_MONTHLY_DATA.slice(-6)
+        return monthlyTrend.slice(-6)
     }
-  }, [timeRange])
+  }, [monthlyTrend, timeRange])
 
   // Summary KPIs for the selected range
   const kpis = useMemo(() => {
@@ -129,9 +178,11 @@ export function useAnalytics() {
     setTimeRange,
     filteredTrend,
     kpis,
-    categoryShare: CATEGORY_SHARE_DATA,
-    budgetPerformance: BUDGET_PERFORMANCE_DATA,
-    topExpenses: TOP_EXPENSES_DATA,
+    isLoading,
+    categoryShare,
+    budgetPerformance,
+    topExpenses,
+    refreshAnalytics: fetchAnalytics,
   }
 }
 

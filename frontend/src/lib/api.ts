@@ -23,10 +23,17 @@ export const apiClient: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor
+// Request interceptor: attach token from localStorage if available
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Inject CSRF header or tracing ID if needed in the future
+    try {
+      const token = localStorage.getItem('hisab_auth_token')
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
     return config
   },
   (error: unknown) => {
@@ -44,12 +51,9 @@ apiClient.interceptors.response.use(
     const customMessage = error.response?.data?.message
 
     if (status === 401) {
-      // Do not redirect if already on login/register pages
-      const currentPath = window.location.pathname
-      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
-        // Broadcast auth expiration or handle redirect gracefully
-        console.warn('Session expired or unauthenticated request.')
-      }
+      // Never use window.location.href to avoid browser reload loops.
+      // React Router ProtectedRoute handles redirection inside React context.
+      console.warn('API request returned 401 Unauthorized.')
     }
 
     const normalizedError = {

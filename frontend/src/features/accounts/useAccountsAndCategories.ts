@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { apiClient } from '@/lib/api'
 import type { Account, Category } from '@/types'
 
 const INITIAL_ACCOUNTS: Account[] = [
@@ -158,6 +159,52 @@ export function useAccountsAndCategories() {
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES)
   const [activeTab, setActiveTab] = useState<'accounts' | 'categories'>('accounts')
   const [categoryTypeFilter, setCategoryTypeFilter] = useState<'all' | 'expense' | 'income'>('all')
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Fetch accounts and categories from backend
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const [accRes, catRes] = await Promise.all([
+        apiClient.get<{ success: boolean; data: { accounts: any[] } }>('/accounts').catch(() => null),
+        apiClient.get<{ success: boolean; data: { categories: any[] } }>('/categories').catch(() => null),
+      ])
+
+      if (accRes?.data?.data?.accounts && accRes.data.data.accounts.length > 0) {
+        setAccounts(accRes.data.data.accounts.map((a: any) => ({
+          id: a.id,
+          userId: a.userId,
+          name: a.name,
+          type: a.type,
+          currency: a.currency || 'BDT',
+          openingBalanceMinor: Number(a.openingBalanceMinor),
+          currentBalanceMinor: Number(a.currentBalanceMinor ?? a.openingBalanceMinor),
+          accountNumberMasked: a.accountNumber ? `•••• ${a.accountNumber.slice(-4)}` : undefined,
+          isArchived: Boolean(a.isArchived),
+        })))
+      }
+
+      if (catRes?.data?.data?.categories && catRes.data.data.categories.length > 0) {
+        setCategories(catRes.data.data.categories.map((c: any) => ({
+          id: c.id,
+          userId: c.userId,
+          name: c.name,
+          type: c.type,
+          color: c.color,
+          icon: c.icon,
+          isArchived: Boolean(c.isArchived),
+        })))
+      }
+    } catch {
+      // Retain fallback defaults
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   // Total liquidity metrics
   const liquiditySummary = useMemo(() => {
@@ -200,13 +247,29 @@ export function useAccountsAndCategories() {
   // Account CRUD
   const createAccount = useCallback(
     (newAcc: Omit<Account, 'id' | 'currentBalanceMinor' | 'isArchived'>) => {
+      const tempId = `acc-${Date.now()}`
       const account: Account = {
         ...newAcc,
-        id: `acc-${Date.now()}`,
+        id: tempId,
         currentBalanceMinor: newAcc.openingBalanceMinor,
         isArchived: false,
       }
       setAccounts((prev) => [...prev, account])
+
+      apiClient.post('/accounts', {
+        name: newAcc.name,
+        type: newAcc.type,
+        currency: newAcc.currency,
+        openingBalanceMinor: newAcc.openingBalanceMinor,
+        accountNumber: newAcc.accountNumberMasked,
+      }).then((res) => {
+        if (res.data?.data?.account?.id) {
+          setAccounts((prev) =>
+            prev.map((a) => (a.id === tempId ? { ...a, id: res.data.data.account.id } : a))
+          )
+        }
+      }).catch(() => {})
+
       return account
     },
     []
@@ -216,16 +279,21 @@ export function useAccountsAndCategories() {
     setAccounts((prev) =>
       prev.map((acc) => (acc.id === id ? { ...acc, ...updates } : acc))
     )
+
+    apiClient.patch(`/accounts/${id}`, updates).catch(() => {})
   }, [])
 
   const archiveAccount = useCallback((id: string) => {
     setAccounts((prev) =>
       prev.map((acc) => (acc.id === id ? { ...acc, isArchived: true } : acc))
     )
+
+    apiClient.patch(`/accounts/${id}`, { isArchived: true }).catch(() => {})
   }, [])
 
   const deleteAccount = useCallback((id: string) => {
     setAccounts((prev) => prev.filter((acc) => acc.id !== id))
+    apiClient.delete(`/accounts/${id}`).catch(() => {})
   }, [])
 
   // Execute an inter-account transfer
@@ -250,6 +318,16 @@ export function useAccountsAndCategories() {
           return acc
         })
       )
+
+      apiClient.post('/transactions', {
+        type: 'transfer',
+        amountMinor,
+        accountId: sourceId,
+        toAccountId: destId,
+        transactionDate: new Date().toISOString().slice(0, 10),
+        description: 'Inter-vault transfer',
+      }).catch(() => {})
+
       return true
     },
     []
@@ -257,12 +335,27 @@ export function useAccountsAndCategories() {
 
   // Category CRUD
   const createCategory = useCallback((newCat: Omit<Category, 'id' | 'isArchived'>) => {
+    const tempId = `cat-${Date.now()}`
     const category: Category = {
       ...newCat,
-      id: `cat-${Date.now()}`,
+      id: tempId,
       isArchived: false,
     }
     setCategories((prev) => [...prev, category])
+
+    apiClient.post('/categories', {
+      name: newCat.name,
+      type: newCat.type,
+      color: newCat.color,
+      icon: newCat.icon,
+    }).then((res) => {
+      if (res.data?.data?.category?.id) {
+        setCategories((prev) =>
+          prev.map((c) => (c.id === tempId ? { ...c, id: res.data.data.category.id } : c))
+        )
+      }
+    }).catch(() => {})
+
     return category
   }, [])
 
@@ -270,15 +363,19 @@ export function useAccountsAndCategories() {
     setCategories((prev) =>
       prev.map((cat) => (cat.id === id ? { ...cat, ...updates } : cat))
     )
+
+    apiClient.patch(`/categories/${id}`, updates).catch(() => {})
   }, [])
 
   const deleteCategory = useCallback((id: string) => {
     setCategories((prev) => prev.filter((cat) => cat.id !== id))
+    apiClient.delete(`/categories/${id}`).catch(() => {})
   }, [])
 
   return {
     accounts,
     categories,
+    isLoading,
     filteredCategories,
     activeTab,
     setActiveTab,
@@ -293,6 +390,7 @@ export function useAccountsAndCategories() {
     createCategory,
     updateCategory,
     deleteCategory,
+    refreshData: fetchData,
   }
 }
 

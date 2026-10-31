@@ -379,7 +379,7 @@ export function useDashboardData() {
     queryFn: async () => {
       try {
         const response = await apiClient.get<{ success: boolean; data: DashboardSummary }>(
-          `/analytics/summary?month=${currentMonthKey}`
+          `/analytics/dashboard?month=${currentMonthKey}`
         )
         if (response.data?.data) {
           return response.data.data
