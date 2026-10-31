@@ -1,6 +1,7 @@
 # Monthly Finance Tracker — Project Instructions
 
 ## 1. Product goal
+
 Build a secure, responsive personal finance application for tracking income, expenses, budgets, accounts, recurring transactions, savings goals, and monthly financial analytics.
 
 The application is a personal record-keeping and planning tool, not a bank and not a financial-advice service.
@@ -8,6 +9,7 @@ The application is a personal record-keeping and planning tool, not a bank and n
 ## 2. Required stack
 
 ### Frontend
+
 - React + TypeScript + Vite
 - Tailwind CSS
 - React Router DOM
@@ -23,7 +25,9 @@ The application is a personal record-keeping and planning tool, not a bank and n
 - shadcn/ui components where useful (optional)
 
 ### Backend
+
 Use the supplied Node/Express stack:
+
 - express, cors, cookie-parser, compression, dotenv, morgan
 - express-validator
 - mysql2 + sequelize
@@ -34,6 +38,7 @@ Use the supplied Node/Express stack:
 - nodemon for development
 
 Recommended additions:
+
 - helmet: HTTP security headers
 - express-rate-limit: protect login and sensitive endpoints
 - bcryptjs: password hashing (do not use the provided custom HMAC password helper for new passwords)
@@ -49,67 +54,69 @@ Install only dependencies that are actually used. Check package compatibility an
 ## 3. Suggested project structure
 
 finance-tracker/
-  frontend/
-    src/
-      app/
-        router.tsx
-        queryClient.ts
-      components/
-        layout/
-        common/
-        charts/
-        forms/
-        transactions/
-      features/
-        auth/
-        dashboard/
-        transactions/
-        categories/
-        budgets/
-        accounts/
-        goals/
-        recurring/
-        reports/
-        settings/
-      hooks/
-      lib/
-        api.ts
-        utils.ts
-        formatters.ts
-      pages/
-      types/
-      styles/
-      main.tsx
-  backend/
-    src/
-      app.js
-      server.js
-      config/
-        database.js
-        env.js
-      controllers/
-      middlewares/
-      models/
-      routes/
-      services/
-      validators/
-      utils/
-      jobs/
-      uploads/              # never commit user uploads
-    migrations/
-    seeders/
-    config/
-      config.json           # use env variables; never commit real secrets
-    tests/
-  docs/
-    ARCHITECTURE.md
-    API.md
-    DATABASE.md
-    SECURITY.md
+frontend/
+src/
+app/
+router.tsx
+queryClient.ts
+components/
+layout/
+common/
+charts/
+forms/
+transactions/
+ui/
+features/
+auth/
+dashboard/
+transactions/
+categories/
+budgets/
+accounts/
+goals/
+recurring/
+reports/
+settings/
+hooks/
+lib/
+api.ts
+utils.ts
+formatters.ts
+pages/
+types/
+styles/
+main.tsx
+backend/
+src/
+app.js
+server.js
+config/
+database.js
+env.js
+controllers/
+middlewares/
+models/
+routes/
+services/
+validators/
+utils/
+jobs/
+uploads/ # never commit user uploads
+migrations/
+seeders/
+config/
+config.json # use env variables; never commit real secrets
+tests/
+docs/
+ARCHITECTURE.md
+API.md
+DATABASE.md
+SECURITY.md
 
 ## 4. Core features
 
 ### Authentication and account
+
 - Register, sign in, sign out, current-user endpoint.
 - Email verification and password reset via Nodemailer.
 - Secure session cookies: HttpOnly, Secure in production, SameSite appropriate to deployment.
@@ -119,6 +126,7 @@ finance-tracker/
 - If using cookie authentication, protect state-changing requests against CSRF using an appropriate strategy and strict CORS/origin checks.
 
 ### Dashboard
+
 - Selected month and year, with previous/next month navigation.
 - Total income, total expenses, net cash flow, savings rate.
 - Month-over-month comparisons.
@@ -131,6 +139,7 @@ finance-tracker/
 - Clear empty states when no records exist.
 
 ### Transactions
+
 - Income, expense, and transfer transaction types.
 - Amount, date, category, account, payee/merchant, note, tags, payment method.
 - Optional receipt attachment.
@@ -142,6 +151,7 @@ finance-tracker/
 - Store transaction date separately from timestamps and define timezone behavior.
 
 ### Categories and accounts
+
 - Custom income and expense categories with colors/icons.
 - Default categories supplied by seeders.
 - Accounts/wallets: cash, bank, mobile wallet, card, other.
@@ -150,6 +160,7 @@ finance-tracker/
 - Do not allow a user to access another user's records.
 
 ### Budgets
+
 - Monthly budgets by category and optional overall spending limit.
 - Spent, remaining, percentage used.
 - Alerts at configurable thresholds, e.g. 80%, 100%.
@@ -157,6 +168,7 @@ finance-tracker/
 - Budget calculations must use server-side aggregation and consistent rules.
 
 ### Recurring transactions
+
 - Daily, weekly, monthly, yearly/custom recurrence.
 - Start date, optional end date, next occurrence, active/paused state.
 - Generate occurrences idempotently; never create duplicates if a job retries.
@@ -164,11 +176,13 @@ finance-tracker/
 - Use a scheduled job only when required; do not rely on the browser being open.
 
 ### Savings goals
+
 - Name, target amount, current saved amount, target date, status.
 - Progress indicator and contribution history.
 - Clearly define how contributions relate to accounts and transfers so they are not double-counted as expenses.
 
 ### Analytics and reports
+
 - Monthly income, expenses, net cash flow, savings rate.
 - Daily or weekly trend within a month.
 - Category breakdown and top categories.
@@ -182,6 +196,7 @@ finance-tracker/
 - Avoid misleading charts: explain whether totals are posted transactions and how transfers/refunds are treated.
 
 ### Additional useful features
+
 - Notes and tags.
 - Quick-add transaction.
 - Global search.
@@ -194,11 +209,13 @@ finance-tracker/
 - Optional recurring reminders, bill due dates, debt/loan tracking, and household sharing can be future phases rather than MVP.
 
 ## 5. Financial calculation rules
+
 Document and test these definitions:
+
 - Income total = sum of posted income transactions for the selected period.
 - Expense total = sum of posted expense transactions for the selected period, with refunds handled by an explicit policy.
 - Net cash flow = income - expenses.
-- Savings rate = (income - expenses) / income * 100, when income > 0; otherwise display N/A.
+- Savings rate = (income - expenses) / income \* 100, when income > 0; otherwise display N/A.
 - Transfers are excluded from income and expense totals.
 - Opening balances are not transactions in monthly income/expense analytics.
 - Use an explicit date range [start, end) in queries to avoid end-of-day bugs.
@@ -206,23 +223,29 @@ Document and test these definitions:
 - Do not calculate totals from only the currently visible page of transactions.
 
 ## 6. Suggested data model
+
 Use Sequelize models and migrations. Add foreign keys, indexes, constraints, and timestamps.
 
 User:
+
 - id UUID or BIGINT primary key
 - name, email (unique), passwordHash
 - emailVerifiedAt, createdAt, updatedAt
 
 Session (if using opaque sessions):
+
 - id, userId, tokenHash, expiresAt, revokedAt, createdAt
 
 Account:
+
 - id, userId, name, type, currency, openingBalanceMinor, isArchived
 
 Category:
+
 - id, userId nullable for system defaults, name, type (income/expense), color, icon, isArchived
 
 Transaction:
+
 - id, userId, accountId, categoryId nullable where appropriate
 - type (income/expense/transfer)
 - amountMinor as BIGINT, currency
@@ -234,70 +257,84 @@ Transaction:
 - createdAt, updatedAt
 
 Budget:
+
 - id, userId, categoryId nullable for overall budget
 - month (YYYY-MM-01 DATE), limitMinor, alertThreshold
 - unique user/category/month combination, accounting for nullable category design
 
 RecurringTransaction:
+
 - id, userId, accountId, categoryId, type, amountMinor
 - frequency, interval, startDate, endDate, nextOccurrence, isActive
 - lastGeneratedOccurrence or unique occurrence keys to ensure idempotency
 
 SavingsGoal:
+
 - id, userId, name, targetAmountMinor, currentAmountMinor or a contributions ledger
 - targetDate, status
 
 SavingsGoalContribution (recommended):
+
 - id, goalId, userId, amountMinor, contributionDate, accountId nullable, note
 
 PasswordResetToken / EmailVerificationToken:
+
 - store token hashes, expiry, usedAt.
 
 Receipt files should be stored outside publicly served source folders or in object storage; keep only a safe storage key/path in the database. Validate file signature/content, size, and authorization.
 
 ## 7. API design
+
 Prefix all endpoints with /api/v1. Use consistent JSON responses and central error handling.
 
 Auth:
+
 - POST /auth/register
 - POST /auth/login
 - POST /auth/logout
-- GET  /auth/me
+- GET /auth/me
 - POST /auth/forgot-password
 - POST /auth/reset-password
 - POST /auth/verify-email
 
 Transactions:
-- GET    /transactions
-- POST   /transactions
-- GET    /transactions/:id
-- PATCH  /transactions/:id
+
+- GET /transactions
+- POST /transactions
+- GET /transactions/:id
+- PATCH /transactions/:id
 - DELETE /transactions/:id
-- GET    /transactions/export
-- POST   /transactions/import (optional)
+- GET /transactions/export
+- POST /transactions/import (optional)
 
 Categories:
+
 - GET/POST /categories
 - PATCH/DELETE /categories/:id
 
 Accounts:
+
 - GET/POST /accounts
 - GET/PATCH/DELETE /accounts/:id
 
 Budgets:
+
 - GET/POST /budgets
 - PATCH/DELETE /budgets/:id
 
 Recurring:
+
 - GET/POST /recurring-transactions
 - PATCH/DELETE /recurring-transactions/:id
 
 Goals:
+
 - GET/POST /goals
 - GET/PATCH/DELETE /goals/:id
 - POST /goals/:id/contributions
 
 Analytics:
+
 - GET /analytics/summary?from=YYYY-MM-DD&to=YYYY-MM-DD
 - GET /analytics/monthly-trend?months=12
 - GET /analytics/category-breakdown?from=...&to=...
@@ -305,6 +342,7 @@ Analytics:
 - GET /analytics/top-expenses?from=...&to=...
 
 Settings:
+
 - GET/PATCH /settings/profile
 - GET/PATCH /settings/preferences
 - POST /account/export
@@ -313,6 +351,7 @@ Settings:
 Use pagination for lists (page, limit), allowlisted sort fields, validated filters, and stable response contracts. Never accept userId from the request body as authorization; derive it from the authenticated identity.
 
 ## 8. Frontend requirements
+
 - Use React Query for server state and cache invalidation.
 - Use Axios through a single configured instance in src/lib/api.ts.
 - Keep API types in a shared frontend types directory.
@@ -325,10 +364,11 @@ Use pagination for lists (page, limit), allowlisted sort fields, validated filte
 - Set query keys by feature and filter parameters.
 - Use query invalidation after mutations.
 - Use error boundaries for page-level failures.
-- Keep secrets out of frontend environment variables. VITE_ variables are public.
+- Keep secrets out of frontend environment variables. VITE\_ variables are public.
 - For cookie sessions, configure Axios with `withCredentials: true`, set a safe base URL, and configure backend CORS/cookies accordingly.
 
 ## 9. Backend security and quality
+
 - Use bcrypt/bcryptjs password hashing (argon2 is also good if supported and maintained).
 - Do not use the sample helper's custom HMAC construction as password hashing. Do not use a fixed fallback secret.
 - Never log passwords, cookies, session tokens, reset tokens, or financial details unnecessarily.
@@ -346,30 +386,37 @@ Use pagination for lists (page, limit), allowlisted sort fields, validated filte
 - Add automated tests for financial calculations, authorization, and transfer handling.
 
 ## 10. Development phases
+
 Phase 1 — Foundation:
+
 - Repository, environment config, DB connection, migrations, error handling.
 - Auth, sessions, account settings.
 - Categories and accounts.
 - Transactions CRUD and filters.
 
 Phase 2 — Financial planning:
+
 - Dashboard and analytics.
 - Budgets and alerts.
 - CSV export.
 
 Phase 3 — Automation:
+
 - Recurring transactions.
 - Savings goals.
 - Email notifications.
 - Receipt uploads.
 
 Phase 4 — Polish and reliability:
+
 - CSV import, report downloads, accessibility, mobile UX.
 - Automated tests, security review, performance indexes.
 - Deployment, backups, monitoring, recovery test.
 
 ## 11. Definition of done
+
 A feature is not complete until:
+
 - Inputs are validated on the server.
 - Authorization/ownership is enforced.
 - Loading, empty, success, and error states exist.
