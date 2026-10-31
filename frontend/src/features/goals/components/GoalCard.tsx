@@ -27,7 +27,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({
   const isCompleted = goal.status === 'completed' || percentage >= 100
 
   return (
-    <Card className="hover:border-[#94a3b8] transition-colors relative flex flex-col justify-between p-4">
+    <Card className="hover:border-[#94a3b8] transition-colors relative flex flex-col justify-between ">
       <div className="space-y-3">
         {/* Header: Title & Status */}
         <div className="flex items-start justify-between gap-2">
