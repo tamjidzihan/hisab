@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { User, Settings, Download, LogOut, ChevronDown } from 'lucide-react'
 import { exportTransactionsToCsv } from '@/features/transactions/csvUtils'
 import { INITIAL_TRANSACTIONS } from '@/features/transactions/useTransactions'
+import { useAuth } from '@/features/auth/AuthContext'
 
 export interface UserMenuProps {
   userName?: string
@@ -11,12 +12,18 @@ export interface UserMenuProps {
 }
 
 export const UserMenu: React.FC<UserMenuProps> = ({
-  userName = 'Account Holder',
-  userEmail = 'user@hisab.local',
+  userName,
+  userEmail,
   onSignOut,
 }) => {
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const effectiveName = userName || user?.name || 'Account Controller'
+  const effectiveEmail = userEmail || user?.email || 'user@hisab.local'
+  const currencyLabel = `${user?.baseCurrency || 'BDT'} Ledger`
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,12 +47,23 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     }
   }, [isOpen])
 
-  const initials = userName
+  const initials = effectiveName
     .split(' ')
     .map((n) => n[0])
+    .filter(Boolean)
     .join('')
     .substring(0, 2)
-    .toUpperCase()
+    .toUpperCase() || 'AC'
+
+  const handleSignOutClick = () => {
+    setIsOpen(false)
+    if (onSignOut) {
+      onSignOut()
+    } else {
+      logout()
+      navigate('/login', { replace: true })
+    }
+  }
 
   return (
     <div className="relative" ref={menuRef}>
@@ -60,10 +78,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({
         </div>
         <div className="hidden md:flex flex-col text-left">
           <span className="text-xs font-semibold text-[#161d26] leading-tight line-clamp-1">
-            {userName}
+            {effectiveName}
           </span>
           <span className="text-[10px] text-[#64748b] leading-tight font-mono">
-            BDT Ledger
+            {currencyLabel}
           </span>
         </div>
         <ChevronDown className="w-3.5 h-3.5 text-[#64748b] hidden md:block" />
@@ -76,8 +94,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({
         >
           {/* User Info Header */}
           <div className="px-3.5 py-2.5 border-b border-[#e5eaf0] bg-[#fafbfd]">
-            <p className="font-semibold text-[#161d26] truncate">{userName}</p>
-            <p className="text-[#64748b] truncate text-[11px] mt-0.5 font-mono">{userEmail}</p>
+            <p className="font-semibold text-[#161d26] truncate">{effectiveName}</p>
+            <p className="text-[#64748b] truncate text-[11px] mt-0.5 font-mono">{effectiveEmail}</p>
           </div>
 
           {/* Menu Items */}
@@ -118,10 +136,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           {/* Sign Out */}
           <div className="border-t border-[#e5eaf0] pt-1 mt-1">
             <button
-              onClick={() => {
-                setIsOpen(false)
-                if (onSignOut) onSignOut()
-              }}
+              onClick={handleSignOutClick}
               className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[#dc2626] hover:bg-[#fef2f2] transition-colors text-left cursor-pointer font-medium"
               role="menuitem"
             >
@@ -134,4 +149,3 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     </div>
   )
 }
-
