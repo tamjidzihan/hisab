@@ -2,159 +2,6 @@ import { useState, useMemo, useCallback, useEffect } from 'react'
 import { apiClient } from '@/lib/api'
 import type { Transaction, TransactionType } from '@/types'
 
-// Initial ledger seed records in integer minor units (paisa) as fallback
-export const INITIAL_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'tx-101',
-    userId: 'usr-1',
-    accountId: 'acc-2',
-    accountName: 'Prime Bank Current',
-    categoryId: 'cat-salary',
-    categoryName: 'Professional Retainer',
-    type: 'income',
-    amountMinor: 6000000, // ৳60,000.00
-    currency: 'BDT',
-    transactionDate: '2026-11-01',
-    description: 'Monthly Software Architecture Retainer',
-    payee: 'TechCorp Solutions',
-    paymentMethod: 'Bank Transfer',
-    notes: 'Invoiced on 25 Oct, cleared via BEFTN.',
-    tags: ['retainer', 'client', 'consulting'],
-    createdAt: '2026-11-01T09:30:00Z',
-    updatedAt: '2026-11-01T09:30:00Z',
-  },
-  {
-    id: 'tx-102',
-    userId: 'usr-1',
-    accountId: 'acc-3',
-    accountName: 'bKash Primary MFS',
-    categoryId: 'cat-bills',
-    categoryName: 'Utilities & Subscriptions',
-    type: 'expense',
-    amountMinor: 150000, // ৳1,500.00
-    currency: 'BDT',
-    transactionDate: '2026-11-01',
-    description: 'Residential Fiber Broadband',
-    payee: 'Carnival Internet',
-    paymentMethod: 'bKash MFS',
-    notes: 'Static IP addon included.',
-    tags: ['internet', 'utility'],
-    createdAt: '2026-11-01T10:15:00Z',
-    updatedAt: '2026-11-01T10:15:00Z',
-  },
-  {
-    id: 'tx-103',
-    userId: 'usr-1',
-    accountId: 'acc-2',
-    accountName: 'Prime Bank Current',
-    categoryId: null,
-    type: 'transfer',
-    amountMinor: 500000, // ৳5,000.00
-    currency: 'BDT',
-    transactionDate: '2026-10-31',
-    description: 'Bank to bKash Top-up',
-    transferGroupId: 'trf-9982',
-    transferDestinationAccountId: 'acc-3',
-    transferDestinationAccountName: 'bKash Primary MFS',
-    paymentMethod: 'Bank Transfer',
-    notes: 'Monthly liquidity allocation for mobile expenses.',
-    tags: ['transfer', 'rebalance'],
-    createdAt: '2026-10-31T18:00:00Z',
-    updatedAt: '2026-10-31T18:00:00Z',
-  },
-  {
-    id: 'tx-104',
-    userId: 'usr-1',
-    accountId: 'acc-1',
-    accountName: 'Cash Vault',
-    categoryId: 'cat-food',
-    categoryName: 'Groceries & Dining',
-    type: 'expense',
-    amountMinor: 428000, // ৳4,280.00
-    currency: 'BDT',
-    transactionDate: '2026-10-30',
-    description: 'Weekly Bazaar & Fresh Produce',
-    payee: 'Shwapno Super Shop',
-    paymentMethod: 'Cash',
-    notes: 'Household groceries and staples.',
-    tags: ['household', 'food'],
-    createdAt: '2026-10-30T16:20:00Z',
-    updatedAt: '2026-10-30T16:20:00Z',
-  },
-  {
-    id: 'tx-105',
-    userId: 'usr-1',
-    accountId: 'acc-4',
-    accountName: 'Nagad Wallet',
-    categoryId: 'cat-transport',
-    categoryName: 'Transportation & Fuel',
-    type: 'expense',
-    amountMinor: 85000, // ৳850.00
-    currency: 'BDT',
-    transactionDate: '2026-10-29',
-    description: 'Fuel Refill & Express Highway Toll',
-    payee: 'Padma Oil Filling Station',
-    paymentMethod: 'Nagad',
-    tags: ['fuel', 'transport'],
-    createdAt: '2026-10-29T14:10:00Z',
-    updatedAt: '2026-10-29T14:10:00Z',
-  },
-  {
-    id: 'tx-106',
-    userId: 'usr-1',
-    accountId: 'acc-2',
-    accountName: 'Prime Bank Current',
-    categoryId: 'cat-invest',
-    categoryName: 'Savings & Goals',
-    type: 'expense',
-    amountMinor: 1500000, // ৳15,000.00
-    currency: 'BDT',
-    transactionDate: '2026-10-28',
-    description: 'Monthly Emergency Fund Deposit',
-    payee: 'National Savings Certificate (Sanchaypatra)',
-    paymentMethod: 'Bank Transfer',
-    tags: ['savings', 'emergency-fund'],
-    createdAt: '2026-10-28T11:00:00Z',
-    updatedAt: '2026-10-28T11:00:00Z',
-  },
-  {
-    id: 'tx-107',
-    userId: 'usr-1',
-    accountId: 'acc-1',
-    accountName: 'Cash Vault',
-    categoryId: 'cat-food',
-    categoryName: 'Groceries & Dining',
-    type: 'expense',
-    amountMinor: 185000, // ৳1,850.00
-    currency: 'BDT',
-    transactionDate: '2026-10-26',
-    description: 'Dinner with colleagues',
-    payee: 'Star Kabab & Restaurant',
-    paymentMethod: 'Cash',
-    tags: ['dining'],
-    createdAt: '2026-10-26T20:45:00Z',
-    updatedAt: '2026-10-26T20:45:00Z',
-  },
-  {
-    id: 'tx-108',
-    userId: 'usr-1',
-    accountId: 'acc-2',
-    accountName: 'Prime Bank Current',
-    categoryId: 'cat-salary',
-    categoryName: 'Professional Retainer',
-    type: 'income',
-    amountMinor: 2500000, // ৳25,000.00
-    currency: 'BDT',
-    transactionDate: '2026-10-25',
-    description: 'Advisory Consultation Fee',
-    payee: 'Apex Financial Services',
-    paymentMethod: 'Bank Transfer',
-    tags: ['advisory', 'freelance'],
-    createdAt: '2026-10-25T15:00:00Z',
-    updatedAt: '2026-10-25T15:00:00Z',
-  },
-]
-
 export interface TransactionFilterState {
   search: string
   type: 'all' | TransactionType
@@ -164,7 +11,7 @@ export interface TransactionFilterState {
 }
 
 export function useTransactions() {
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [filters, setFilters] = useState<TransactionFilterState>({
     search: '',
@@ -184,7 +31,7 @@ export function useTransactions() {
     try {
       setIsLoading(true)
       const res = await apiClient.get<{ success: boolean; data: { transactions: any[] } }>('/transactions?limit=250')
-      if (res.data?.data?.transactions && Array.isArray(res.data.data.transactions) && res.data.data.transactions.length > 0) {
+      if (res.data?.data?.transactions && Array.isArray(res.data.data.transactions)) {
         const mapped: Transaction[] = res.data.data.transactions.map((tx: any) => ({
           id: tx.id,
           userId: tx.userId,
@@ -209,9 +56,11 @@ export function useTransactions() {
           updatedAt: tx.updatedAt || new Date().toISOString(),
         }))
         setTransactions(mapped)
+      } else {
+        setTransactions([])
       }
     } catch {
-      // Quiet fallback to initial transactions
+      setTransactions([])
     } finally {
       setIsLoading(false)
     }
@@ -258,10 +107,14 @@ export function useTransactions() {
       if (filters.category !== 'all' && tx.categoryName !== filters.category) return false
 
       // Date Preset Filter
+      const currentYearMonth = new Date().toISOString().slice(0, 7)
       if (filters.datePreset === 'this_month') {
-        if (!tx.transactionDate.startsWith('2026-11')) return false
+        if (!tx.transactionDate.startsWith(currentYearMonth)) return false
       } else if (filters.datePreset === 'last_month') {
-        if (!tx.transactionDate.startsWith('2026-10')) return false
+        const d = new Date()
+        d.setMonth(d.getMonth() - 1)
+        const lastYearMonth = d.toISOString().slice(0, 7)
+        if (!tx.transactionDate.startsWith(lastYearMonth)) return false
       }
 
       // Search query (payee, description, notes, tags)
@@ -369,9 +222,7 @@ export function useTransactions() {
       )
     )
 
-    apiClient.patch(`/transactions/${id}`, updatedFields).catch(() => {
-      // Local changes retained
-    })
+    apiClient.patch(`/transactions/${id}`, updatedFields).catch(() => {})
   }, [])
 
   const deleteTransaction = useCallback((id: string) => {
@@ -381,9 +232,7 @@ export function useTransactions() {
       return prev.filter((tx) => tx.id !== id)
     })
 
-    apiClient.delete(`/transactions/${id}`).catch(() => {
-      // Handled gracefully
-    })
+    apiClient.delete(`/transactions/${id}`).catch(() => {})
 
     return deletedItem
   }, [])
@@ -400,14 +249,11 @@ export function useTransactions() {
       notes: tx.notes,
       accountId: tx.accountId,
       categoryId: tx.categoryId,
-    }).catch(() => {
-      // Local retained
-    })
+    }).catch(() => {})
   }, [])
 
   const bulkImportTransactions = useCallback((newItems: Transaction[]) => {
     setTransactions((prev) => [...newItems, ...prev])
-    // Sync each imported transaction
     newItems.forEach((tx) => {
       apiClient.post('/transactions', {
         type: tx.type,
@@ -471,4 +317,3 @@ export function useTransactions() {
     refreshTransactions: fetchTransactions,
   }
 }
-

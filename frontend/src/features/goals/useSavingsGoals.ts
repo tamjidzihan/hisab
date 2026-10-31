@@ -12,80 +12,11 @@ export interface GoalContribution {
   notes?: string
 }
 
-const INITIAL_GOALS: SavingsGoal[] = [
-  {
-    id: 'goal-1',
-    userId: 'usr-1',
-    name: '6-Month Emergency Vault',
-    targetAmountMinor: 30000000, // ৳300,000.00
-    currentAmountMinor: 18500000, // ৳185,000.00 (61.7%)
-    targetDate: '2027-04-30',
-    status: 'active',
-  },
-  {
-    id: 'goal-2',
-    userId: 'usr-1',
-    name: 'Tech Hardware Replacement',
-    targetAmountMinor: 12000000, // ৳120,000.00
-    currentAmountMinor: 9500000,  // ৳95,000.00 (79.2%)
-    targetDate: '2026-12-31',
-    status: 'active',
-  },
-  {
-    id: 'goal-3',
-    userId: 'usr-1',
-    name: 'Hajj & Pilgrimage Reserve',
-    targetAmountMinor: 50000000, // ৳500,000.00
-    currentAmountMinor: 21000000, // ৳210,000.00 (42.0%)
-    targetDate: '2028-06-01',
-    status: 'active',
-  },
-  {
-    id: 'goal-4',
-    userId: 'usr-1',
-    name: 'Home Appliance Upgrades',
-    targetAmountMinor: 5000000, // ৳50,000.00
-    currentAmountMinor: 5000000, // ৳50,000.00 (100.0%)
-    targetDate: '2026-10-15',
-    status: 'completed',
-  },
-]
-
-const INITIAL_CONTRIBUTIONS: GoalContribution[] = [
-  {
-    id: 'con-1',
-    goalId: 'goal-1',
-    goalName: '6-Month Emergency Vault',
-    amountMinor: 1500000, // ৳15,000.00
-    date: '2026-10-28',
-    accountName: 'Prime Bank Current',
-    notes: 'Monthly allocation from client retainer.',
-  },
-  {
-    id: 'con-2',
-    goalId: 'goal-2',
-    goalName: 'Tech Hardware Replacement',
-    amountMinor: 1000000, // ৳10,000.00
-    date: '2026-10-15',
-    accountName: 'Prime Bank Current',
-    notes: 'Q4 GPU replacement fund deposit.',
-  },
-  {
-    id: 'con-3',
-    goalId: 'goal-3',
-    goalName: 'Hajj & Pilgrimage Reserve',
-    amountMinor: 2000000, // ৳20,000.00
-    date: '2026-10-05',
-    accountName: 'Prime Bank Current',
-    notes: 'Quarterly deposit into Shariah savings.',
-  },
-]
-
 export type GoalStatusFilter = 'all' | 'active' | 'completed' | 'paused'
 
 export function useSavingsGoals() {
-  const [goals, setGoals] = useState<SavingsGoal[]>(INITIAL_GOALS)
-  const [contributions, setContributions] = useState<GoalContribution[]>(INITIAL_CONTRIBUTIONS)
+  const [goals, setGoals] = useState<SavingsGoal[]>([])
+  const [contributions, setContributions] = useState<GoalContribution[]>([])
   const [statusFilter, setStatusFilter] = useState<GoalStatusFilter>('all')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -94,7 +25,7 @@ export function useSavingsGoals() {
     try {
       setIsLoading(true)
       const res = await apiClient.get<{ success: boolean; data: { goals: any[] } }>('/goals')
-      if (res.data?.data?.goals && Array.isArray(res.data.data.goals) && res.data.data.goals.length > 0) {
+      if (res.data?.data?.goals && Array.isArray(res.data.data.goals)) {
         const mappedGoals: SavingsGoal[] = res.data.data.goals.map((g: any) => ({
           id: g.id,
           userId: g.userId,
@@ -123,12 +54,14 @@ export function useSavingsGoals() {
         })
 
         setGoals(mappedGoals)
-        if (allContribs.length > 0) {
-          setContributions(allContribs)
-        }
+        setContributions(allContribs)
+      } else {
+        setGoals([])
+        setContributions([])
       }
     } catch {
-      // Retain fallback dataset
+      setGoals([])
+      setContributions([])
     } finally {
       setIsLoading(false)
     }
@@ -284,4 +217,3 @@ export function useSavingsGoals() {
     refreshGoals: fetchGoals,
   }
 }
-
