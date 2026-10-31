@@ -7,8 +7,13 @@ import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
+import { TourProvider, useTourGuide } from '@/features/tour/TourContext'
+import { FirstTimeWelcomeModal } from '@/features/tour/FirstTimeWelcomeModal'
+import { InteractiveTourOverlay } from '@/features/tour/InteractiveTourOverlay'
+import { SiteDirectoryModal } from '@/features/tour/SiteDirectoryModal'
 
-export const AppShell: React.FC = () => {
+const AppShellInner: React.FC = () => {
+  const { openGuideModal } = useTourGuide()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [quickLogModalOpen, setQuickLogModalOpen] = useState(false)
 
@@ -36,6 +41,7 @@ export const AppShell: React.FC = () => {
       <Sidebar
         isOpen={mobileSidebarOpen}
         onClose={() => setMobileSidebarOpen(false)}
+        onOpenTourGuide={openGuideModal}
       />
 
       {/* Main Content Viewport */}
@@ -44,6 +50,7 @@ export const AppShell: React.FC = () => {
         <Header
           onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
           onQuickLog={() => setQuickLogModalOpen(true)}
+          onOpenTourGuide={openGuideModal}
         />
 
         {/* Dynamic Route Content */}
@@ -131,7 +138,19 @@ export const AppShell: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Tour Guide Components */}
+      <FirstTimeWelcomeModal />
+      <InteractiveTourOverlay />
+      <SiteDirectoryModal />
     </div>
   )
 }
 
+export const AppShell: React.FC = () => {
+  return (
+    <TourProvider>
+      <AppShellInner />
+    </TourProvider>
+  )
+}

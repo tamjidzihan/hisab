@@ -1,5 +1,5 @@
 import React from 'react'
-import { Menu, Plus } from 'lucide-react'
+import { Menu, Plus, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { UserMenu } from './UserMenu'
 import { NotificationDropdown } from './NotificationDropdown'
@@ -8,11 +8,13 @@ import { format } from 'date-fns'
 export interface HeaderProps {
   onOpenMobileSidebar: () => void
   onQuickLog?: () => void
+  onOpenTourGuide?: () => void
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenMobileSidebar,
   onQuickLog,
+  onOpenTourGuide,
 }) => {
   const currentDate = format(new Date(), 'EEEE, dd MMMM yyyy')
 
@@ -38,8 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Right: Quick Action, Alerts & Profile */}
-      <div className="flex items-center gap-2.5 sm:gap-3">
+      {/* Right: Quick Action, Tour Guide, Alerts & Profile */}
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Quick Log Action */}
         <Button
           size="sm"
@@ -52,10 +54,23 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="sm:hidden">Log</span>
         </Button>
 
+        {/* Tour Guide & In-App Help Trigger */}
+        {onOpenTourGuide && (
+          <button
+            type="button"
+            onClick={onOpenTourGuide}
+            title="Tour Guide & Site Directory"
+            className="flex items-center gap-1.5 h-8 px-2.5 rounded-[4px] border border-[#d2d9e4] bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#161d26] transition-colors cursor-pointer text-xs font-mono font-medium"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-[#d97706]" />
+            <span className="hidden sm:inline">Guide</span>
+          </button>
+        )}
+
         {/* Notifications Dropdown */}
         <NotificationDropdown />
 
-        <div className="h-6 w-[1px] bg-[#d2d9e4] mx-1" aria-hidden="true" />
+        <div className="h-6 w-[1px] bg-[#d2d9e4] mx-0.5 sm:mx-1" aria-hidden="true" />
 
         {/* User Menu Dropdown */}
         <UserMenu />
@@ -63,4 +78,3 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   )
 }
-
