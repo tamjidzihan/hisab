@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import type { Transaction, TransactionType } from '@/types'
 
 // Initial ledger seed records in integer minor units (paisa)
-const INITIAL_TRANSACTIONS: Transaction[] = [
+export const INITIAL_TRANSACTIONS: Transaction[] = [
   {
     id: 'tx-101',
     userId: 'usr-1',
