@@ -1,7 +1,8 @@
 import React from 'react'
-import { Menu, Plus, Bell } from 'lucide-react'
+import { Menu, Plus } from 'lucide-react'
 import { Button } from '@/components/common/Button'
 import { UserMenu } from './UserMenu'
+import { NotificationDropdown } from './NotificationDropdown'
 import { format } from 'date-fns'
 
 export interface HeaderProps {
@@ -51,14 +52,8 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="sm:hidden">Log</span>
         </Button>
 
-        {/* Notifications Icon */}
-        <button
-          aria-label="View notifications"
-          className="relative p-2 rounded-[4px] border border-[#d2d9e4] text-[#64748b] hover:text-[#161d26] hover:bg-[#f4f6f9] transition-colors cursor-pointer"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#d97706]" />
-        </button>
+        {/* Notifications Dropdown */}
+        <NotificationDropdown />
 
         <div className="h-6 w-[1px] bg-[#d2d9e4] mx-1" aria-hidden="true" />
 
