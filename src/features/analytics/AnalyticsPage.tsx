@@ -68,7 +68,10 @@ export const AnalyticsPage: React.FC = () => {
         {/* Actions & Filters */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* Time range selector pills */}
-          <div className="flex items-center gap-1 bg-white border border-[#d2d9e4] rounded-[4px] p-1">
+          <div
+            data-tour-target="analytics-ranges"
+            className="flex items-center gap-1 bg-white border border-[#d2d9e4] rounded-[4px] p-1"
+          >
             {timeRanges.map((range) => (
               <button
                 key={range.id}

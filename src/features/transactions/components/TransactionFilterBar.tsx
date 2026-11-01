@@ -73,6 +73,7 @@ export const TransactionFilterBar: React.FC<TransactionFilterBarProps> = ({
           </Button>
 
           <Button
+            data-tour-target="transactions-create"
             size="sm"
             variant="primary"
             onClick={onOpenCreateModal}
@@ -161,4 +162,3 @@ export const TransactionFilterBar: React.FC<TransactionFilterBarProps> = ({
     </div>
   )
 }
-

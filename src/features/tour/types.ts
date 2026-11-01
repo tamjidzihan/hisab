@@ -3,6 +3,7 @@ export interface TourStep {
   title: string
   subtitle: string
   location: string
+  target: string
   route: string
   howTo: string[]
   architectRule: string
@@ -34,4 +35,3 @@ export interface TourContextValue {
   closeWelcomeModal: () => void
   restartTour: () => void
 }
-

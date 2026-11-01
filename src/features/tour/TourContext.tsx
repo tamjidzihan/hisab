@@ -1,36 +1,95 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { apiClient } from '@/lib/api'
+import { useAuth } from '@/features/auth/AuthContext'
 import { TOUR_STEPS } from './tourSteps'
 import type { TourContextValue } from './types'
 
-const TOUR_STORAGE_KEY = 'hisab_tour_has_seen'
+const USER_TOUR_STORAGE_KEY = 'hisab_tour_has_seen:'
 
 const TourContext = createContext<TourContextValue | undefined>(undefined)
 
 export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const [isWelcomeOpen, setIsWelcomeOpen] = useState(false)
   const [isTourActive, setIsTourActive] = useState(false)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false)
+  const userId = user?.id
 
-  // Check if first-time user on mount
   useEffect(() => {
-    try {
-      const hasSeen = localStorage.getItem(TOUR_STORAGE_KEY)
-      if (!hasSeen) {
-        // Delay slightly for smooth page entrance
-        const timer = setTimeout(() => {
-          setIsWelcomeOpen(true)
-        }, 800)
-        return () => clearTimeout(timer)
+    if (!userId) return
+
+    let isCurrent = true
+    let welcomeTimer: ReturnType<typeof setTimeout> | undefined
+    const storageKey = `${USER_TOUR_STORAGE_KEY}${userId}`
+    setIsWelcomeOpen(false)
+
+    const loadTourProgress = async () => {
+      let hasSeenLocally = false
+      try {
+        hasSeenLocally = localStorage.getItem(storageKey) === 'true'
+      } catch (error) {
+        console.error('Failed to read local tour progress.', error)
       }
-    } catch {
-      // Ignore storage errors
+
+      try {
+        const response = await apiClient.get<{ success: boolean; data: { completed: boolean } }>('/settings/tour')
+        let completed = response.data.data.completed
+
+        if (!completed && hasSeenLocally) {
+          await apiClient.patch('/settings/tour', { completed: true })
+          completed = true
+        }
+
+        if (!isCurrent) return
+
+        if (completed) {
+          try {
+            localStorage.setItem(storageKey, 'true')
+          } catch (error) {
+            console.error('Failed to cache tour progress locally.', error)
+          }
+        } else {
+          welcomeTimer = setTimeout(() => setIsWelcomeOpen(true), 800)
+        }
+      } catch (error) {
+        console.error('Failed to load or migrate tour progress.', error)
+        toast.error('Could not sync your tour progress. Please try again later.')
+        if (!isCurrent) return
+        setIsWelcomeOpen(!hasSeenLocally)
+      }
     }
-  }, [])
+
+    void loadTourProgress()
+    return () => {
+      isCurrent = false
+      if (welcomeTimer) clearTimeout(welcomeTimer)
+    }
+  }, [userId])
+
+  const saveTourProgress = useCallback(async () => {
+    if (!userId) return
+
+    try {
+      await apiClient.patch('/settings/tour', { completed: true })
+      try {
+        localStorage.setItem(`${USER_TOUR_STORAGE_KEY}${userId}`, 'true')
+      } catch (error) {
+        console.error('Failed to cache tour progress locally.', error)
+      }
+    } catch (error) {
+      console.error('Failed to save tour progress.', error)
+      toast.error('Your tour progress could not be saved. Check your connection and try again.')
+    }
+  }, [userId])
+
+  const completeTour = useCallback(() => {
+    void saveTourProgress()
+  }, [saveTourProgress])
 
   const startTour = useCallback(() => {
     setIsWelcomeOpen(false)
@@ -49,14 +108,12 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Completed all steps
         setIsTourActive(false)
-        try {
-          localStorage.setItem(TOUR_STORAGE_KEY, 'true')
-        } catch {}
+        completeTour()
         toast.success("Tour Completed: You're ready to master your personal finance ledger!")
         return prev
       }
     })
-  }, [navigate])
+  }, [completeTour, navigate])
 
   const prevStep = useCallback(() => {
     setCurrentStepIndex((prev) => {
@@ -68,11 +125,9 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const skipTour = useCallback(() => {
     setIsTourActive(false)
-    try {
-      localStorage.setItem(TOUR_STORAGE_KEY, 'true')
-    } catch {}
+    completeTour()
     toast.info('Tour skipped. Reopen anytime from the top bar or sidebar guide.')
-  }, [])
+  }, [completeTour])
 
   const openGuideModal = useCallback(() => {
     setIsGuideModalOpen(true)
@@ -88,10 +143,8 @@ export const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const closeWelcomeModal = useCallback(() => {
     setIsWelcomeOpen(false)
-    try {
-      localStorage.setItem(TOUR_STORAGE_KEY, 'true')
-    } catch {}
-  }, [])
+    completeTour()
+  }, [completeTour])
 
   const restartTour = useCallback(() => {
     setIsGuideModalOpen(false)
@@ -127,4 +180,3 @@ export function useTourGuide(): TourContextValue {
   }
   return context
 }
-

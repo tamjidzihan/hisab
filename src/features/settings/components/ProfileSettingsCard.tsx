@@ -4,7 +4,7 @@ import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Badge } from '@/components/common/Badge'
 import { toast } from 'sonner'
-import { User, ShieldCheck, Hash, Calendar, Save } from 'lucide-react'
+import { User, ShieldCheck, Calendar, Save } from 'lucide-react'
 import type { UserProfile } from '../types'
 
 export interface ProfileSettingsCardProps {

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Plus,
   LayoutDashboard,
@@ -32,10 +32,49 @@ const ICON_MAP = {
 
 export const InteractiveTourOverlay: React.FC = () => {
   const { isTourActive, currentStepIndex, nextStep, prevStep, skipTour } = useTourGuide()
+  const step = TOUR_STEPS[currentStepIndex]
+  const [spotlight, setSpotlight] = useState<{ target: string; rect: DOMRect } | null>(null)
+  const targetRect = spotlight?.target === step.target ? spotlight.rect : null
+
+  useEffect(() => {
+    if (!isTourActive) return
+
+    let intervalId: number | undefined
+    let observer: ResizeObserver | undefined
+    let target: HTMLElement | null = null
+
+    const updateTargetRect = () => {
+      if (!target?.isConnected) {
+        target = document.querySelector<HTMLElement>(
+          `[data-tour-target="${step.target}"]`
+        )
+        if (!target) return
+        target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+        if (intervalId) {
+          window.clearInterval(intervalId)
+          intervalId = undefined
+        }
+        observer = new ResizeObserver(updateTargetRect)
+        observer.observe(target)
+      }
+
+      setSpotlight({ target: step.target, rect: target.getBoundingClientRect() })
+    }
+
+    intervalId = window.setInterval(updateTargetRect, 100)
+    window.addEventListener('resize', updateTargetRect)
+    window.addEventListener('scroll', updateTargetRect, true)
+
+    return () => {
+      if (intervalId) window.clearInterval(intervalId)
+      observer?.disconnect()
+      window.removeEventListener('resize', updateTargetRect)
+      window.removeEventListener('scroll', updateTargetRect, true)
+    }
+  }, [isTourActive, step.target])
 
   if (!isTourActive) return null
 
-  const step = TOUR_STEPS[currentStepIndex]
   const IconComponent = ICON_MAP[step.iconName] || Compass
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === TOUR_STEPS.length - 1
@@ -44,18 +83,27 @@ export const InteractiveTourOverlay: React.FC = () => {
   return (
     <div
       role="region"
-      aria-label="Interactive Tour Guide"
-      className="fixed inset-0 z-50 pointer-events-none flex items-end sm:items-center justify-center p-3 sm:p-6"
+      aria-label={`Guided tour: step ${currentStepIndex + 1} of ${TOUR_STEPS.length}`}
+      aria-live="polite"
+      className="fixed inset-0 z-[60] pointer-events-none"
     >
-      {/* Dimmed backdrop with clicking to avoid trapping */}
-      <div
-        className="absolute inset-0 bg-[#161d26]/30 backdrop-blur-[1px] pointer-events-auto"
-        onClick={skipTour}
-        aria-hidden="true"
-      />
+      {targetRect ? (
+        <div
+          aria-hidden="true"
+          className="fixed z-[61] rounded-[6px] border-2 border-[#d97706] shadow-[0_0_0_9999px_rgba(22,29,38,0.48),0_0_0_5px_rgba(217,119,6,0.22)] transition-[top,left,width,height] duration-200 ease-out"
+          style={{
+            top: Math.max(4, targetRect.top - 6),
+            left: Math.max(4, targetRect.left - 6),
+            width: Math.min(window.innerWidth - 8, targetRect.width + 12),
+            height: Math.min(window.innerHeight - 8, targetRect.height + 12),
+            pointerEvents: 'none',
+          }}
+        />
+      ) : (
+        <div className="fixed inset-0 z-[61] bg-[#161d26]/40" aria-hidden="true" />
+      )}
 
-      {/* Floating Tour Guide Card */}
-      <div className="relative pointer-events-auto w-full max-w-lg bg-white border-2 border-[#161d26] rounded-[6px] shadow-[0_16px_36px_rgba(22,29,38,0.18)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="fixed z-[62] bottom-3 left-3 right-3 sm:bottom-6 sm:left-auto sm:right-6 sm:w-[min(28rem,calc(100vw-3rem))] pointer-events-auto bg-white border border-[#161d26] rounded-[6px] shadow-[0_16px_36px_rgba(22,29,38,0.22)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
         {/* Top 3px Precision Drafting Caliper Line */}
         <div className="h-1 bg-[#e2e8f0] relative w-full overflow-hidden">
           <div
@@ -71,7 +119,7 @@ export const InteractiveTourOverlay: React.FC = () => {
               <IconComponent className="w-3.5 h-3.5" />
             </span>
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#161d26]">
-              Walkthrough Step {currentStepIndex + 1} of {TOUR_STEPS.length}
+              Step {currentStepIndex + 1} of {TOUR_STEPS.length}
             </span>
           </div>
 
@@ -92,7 +140,7 @@ export const InteractiveTourOverlay: React.FC = () => {
         </div>
 
         {/* Card Body */}
-        <div className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div className="p-4 sm:p-5 space-y-3 max-h-[68vh] overflow-y-auto">
           {/* Step Title & Subtitle */}
           <div>
             <h3 className="text-base font-bold text-[#161d26] tracking-tight">
@@ -101,16 +149,13 @@ export const InteractiveTourOverlay: React.FC = () => {
             <p className="text-xs text-[#64748b] mt-0.5">{step.subtitle}</p>
           </div>
 
-          {/* Where to Find It */}
-          <div className="p-2.5 bg-[#f8fafc] border border-[#d2d9e4] rounded-[4px] flex items-start gap-2">
-            <MapPin className="w-4 h-4 text-[#d97706] shrink-0 mt-0.5" />
+          <div className="p-2.5 bg-[#fffbeb] border border-[#fde68a] rounded-[4px] flex items-start gap-2">
+            <MapPin className="w-4 h-4 text-[#b45309] shrink-0 mt-0.5" />
             <div className="text-xs">
-              <span className="text-[10px] uppercase font-mono tracking-wider text-[#64748b] block font-semibold">
-                Where to find it
+              <span className="text-[10px] uppercase font-mono tracking-wider text-[#78350f] block font-semibold">
+                Look for the highlighted area
               </span>
-              <span className="font-semibold text-[#161d26] font-mono text-[11px]">
-                {step.location}
-              </span>
+              <span className="font-semibold text-[#161d26] text-[11px]">{step.location}</span>
             </div>
           </div>
 
@@ -131,14 +176,14 @@ export const InteractiveTourOverlay: React.FC = () => {
             </ul>
           </div>
 
-          {/* Architect's Financial Invariant */}
+          {/* Key product rule */}
           <div className="p-3 bg-[#fffbeb] border border-[#fde68a] rounded-[4px] flex items-start gap-2.5">
-            <Lightbulb className="w-4 h-4 text-[#d97706] shrink-0 mt-0.5" />
+            <Lightbulb className="w-4 h-4 text-[#b45309] shrink-0 mt-0.5" />
             <div className="text-xs">
-              <span className="font-mono text-[10px] uppercase font-bold text-[#92400e] block tracking-wider">
-                Architect&apos;s Rule
+              <span className="font-mono text-[10px] uppercase font-bold text-[#78350f] block tracking-wider">
+                Good to know
               </span>
-              <p className="text-[#78350f] text-[11px] leading-relaxed mt-0.5">
+              <p className="text-[#713f12] text-[11px] leading-relaxed mt-0.5">
                 {step.architectRule}
               </p>
             </div>
@@ -146,14 +191,14 @@ export const InteractiveTourOverlay: React.FC = () => {
         </div>
 
         {/* Card Footer with Navigation Controls */}
-        <div className="px-5 py-3.5 border-t border-[#e5eaf0] bg-[#fafbfd] flex items-center justify-between">
+        <div className="px-4 sm:px-5 py-3 border-t border-[#e5eaf0] bg-[#fafbfd] flex items-center justify-between gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={skipTour}
             className="text-xs text-[#64748b] hover:text-[#161d26]"
           >
-            Skip Tour
+            Exit tour
           </Button>
 
           <div className="flex items-center gap-2">
@@ -165,7 +210,7 @@ export const InteractiveTourOverlay: React.FC = () => {
                 leftIcon={<ArrowLeft className="w-3.5 h-3.5" />}
                 className="text-xs"
               >
-                Previous
+                Back
               </Button>
             )}
 
@@ -178,7 +223,7 @@ export const InteractiveTourOverlay: React.FC = () => {
               }
               className="text-xs font-semibold px-4"
             >
-              {isLastStep ? 'Complete Walkthrough' : 'Next Step'}
+              {isLastStep ? 'Finish tour' : 'Next'}
             </Button>
           </div>
         </div>
@@ -186,4 +231,3 @@ export const InteractiveTourOverlay: React.FC = () => {
     </div>
   )
 }
-
