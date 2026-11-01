@@ -9,6 +9,7 @@ import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 import { exportTransactionsToCsv } from './csvUtils'
 import { useAccountsAndCategories } from '@/features/accounts/useAccountsAndCategories'
 import { formatCurrency } from '@/lib/formatters'
+import { TransactionsSkeleton } from '@/components/common/SkeletonScreens'
 import type { Transaction } from '@/types'
 
 export const TransactionsPage: React.FC = () => {
@@ -44,6 +45,7 @@ export const TransactionsPage: React.FC = () => {
     deleteTransaction,
     restoreTransaction,
     bulkImportTransactions,
+    isLoading,
   } = useTransactions()
 
   // Modal Dialog States
@@ -51,6 +53,8 @@ export const TransactionsPage: React.FC = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null)
+
+  if (isLoading) return <TransactionsSkeleton />
 
   // Handlers
   const handleOpenCreate = () => {

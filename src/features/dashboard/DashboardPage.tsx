@@ -9,6 +9,7 @@ import { RecentTransactionsLedger } from './components/RecentTransactionsLedger'
 import { UpcomingRecurringWidget } from './components/UpcomingRecurringWidget'
 import { SavingsGoalsWidget } from './components/SavingsGoalsWidget'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
+import { DashboardSkeleton } from '@/components/common/SkeletonScreens'
 import { ErrorMessage } from '@/components/common/ErrorMessage'
 import { Badge } from '@/components/common/Badge'
 
@@ -27,11 +28,7 @@ export const DashboardPage: React.FC = () => {
   } = useDashboardData()
 
   if (isLoading) {
-    return (
-      <div className="py-20 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading Ledger Accounts & Calipers..." />
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   if (isError || !data) {

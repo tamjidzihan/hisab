@@ -7,6 +7,7 @@ import { CategoryBreakdownDonut } from './components/CategoryBreakdownDonut'
 import { BudgetPerformanceChart } from './components/BudgetPerformanceChart'
 import { TopExpensesTable } from './components/TopExpensesTable'
 import { useAnalytics, type AnalyticsTimeRange } from './useAnalytics'
+import { AnalyticsSkeleton } from '@/components/common/SkeletonScreens'
 import { Download } from 'lucide-react'
 
 export const AnalyticsPage: React.FC = () => {
@@ -18,7 +19,10 @@ export const AnalyticsPage: React.FC = () => {
     categoryShare,
     budgetPerformance,
     topExpenses,
+    isLoading,
   } = useAnalytics()
+
+  if (isLoading) return <AnalyticsSkeleton />
 
   const handleExportReport = () => {
     // Generate CSV Analytical Report

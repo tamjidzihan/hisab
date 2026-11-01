@@ -9,6 +9,7 @@ import { CategoryCard } from './components/CategoryCard'
 import { CategoryModal } from './components/CategoryModal'
 import { useAccountsAndCategories } from './useAccountsAndCategories'
 import { formatCurrency } from '@/lib/formatters'
+import { AccountsSkeleton } from '@/components/common/SkeletonScreens'
 import {
   Landmark,
   Plus,
@@ -37,6 +38,7 @@ export const AccountsPage: React.FC = () => {
     createCategory,
     updateCategory,
     deleteCategory,
+    isLoading,
   } = useAccountsAndCategories()
 
   // Modal Dialog States
@@ -48,6 +50,8 @@ export const AccountsPage: React.FC = () => {
 
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+
+  if (isLoading) return <AccountsSkeleton />
 
   // Account Handlers
   const handleOpenCreateAccount = () => {

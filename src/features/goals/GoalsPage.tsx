@@ -8,6 +8,7 @@ import { GoalModal } from './components/GoalModal'
 import { ContributionModal } from './components/ContributionModal'
 import { useSavingsGoals, type GoalStatusFilter } from './useSavingsGoals'
 import { useAccountsAndCategories } from '@/features/accounts/useAccountsAndCategories'
+import { GoalsSkeleton } from '@/components/common/SkeletonScreens'
 import { Plus, Target, ArrowDownToLine } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SavingsGoal } from '@/types'
@@ -30,12 +31,15 @@ export const GoalsPage: React.FC = () => {
     updateGoal,
     deleteGoal,
     addContribution,
+    isLoading,
   } = useSavingsGoals()
 
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null)
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
   const [depositTargetGoal, setDepositTargetGoal] = useState<SavingsGoal | null>(null)
+
+  if (isLoading) return <GoalsSkeleton />
 
   const handleOpenCreateGoal = () => {
     setEditingGoal(null)
