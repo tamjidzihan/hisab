@@ -30,6 +30,6 @@ export interface AuthContextValue {
   isLoading: boolean
   login: (credentials: LoginCredentials) => Promise<void>
   register: (credentials: RegisterCredentials) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
