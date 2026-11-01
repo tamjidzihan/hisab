@@ -2,6 +2,7 @@ import React from 'react'
 import { Card } from '@/components/common/Card'
 import { Badge } from '@/components/common/Badge'
 import { Edit2, Trash2 } from 'lucide-react'
+import { getCategoryIcon } from './categoryIcons'
 import type { Category } from '@/types'
 
 export interface CategoryCardProps {
@@ -16,16 +17,21 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
   onDelete,
 }) => {
   const isIncome = category.type === 'income'
+  const CategoryIcon = getCategoryIcon(category.icon)
 
   return (
     <Card className="p-3.5 hover:border-[#94a3b8] transition-colors flex items-center justify-between">
       <div className="flex items-center gap-3">
-        {/* Color Indicator Swatch */}
         <div
-          className="w-3.5 h-3.5 rounded-[3px] shrink-0 border border-[#d2d9e4]"
-          style={{ backgroundColor: category.color }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#d2d9e4] bg-[#f4f6f9]"
           title={`Category color: ${category.color}`}
-        />
+          style={{ borderBottomColor: category.color, borderBottomWidth: 3 }}
+        >
+          {React.createElement(CategoryIcon, {
+            className: 'h-4 w-4 text-[#161d26]',
+            'aria-hidden': true,
+          })}
+        </div>
 
         <div>
           <div className="flex items-center gap-2">
