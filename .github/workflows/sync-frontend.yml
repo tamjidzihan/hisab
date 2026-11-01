@@ -1,0 +1,29 @@
+name: Sync frontend Branch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-frontend-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract frontend subtree and push to frontend branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Extract frontend folder into a subtree branch and force-push to 'frontend'
+          git subtree split --prefix=frontend -b sync-frontend-branch
+          git push -f origin sync-frontend-branch:frontend

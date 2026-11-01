@@ -1,0 +1,29 @@
+name: Sync backend Branch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-backend-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract backend subtree and push to backend branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Extract backend folder into a subtree branch and force-push to 'backend'
+          git subtree split --prefix=backend -b sync-backend-branch
+          git push -f origin sync-backend-branch:backend
