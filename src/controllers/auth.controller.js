@@ -113,10 +113,13 @@ const login = async (req, res, next) => {
 
 // POST /api/v1/auth/logout
 const logout = async (req, res) => {
+  // clearCookie options must exactly mirror the options used when the cookie was set.
+  // Mismatch on path/domain/secure/sameSite causes the browser to ignore the clear directive.
   res.clearCookie(env.SESSION_COOKIE_NAME, {
     httpOnly: true,
     secure: env.COOKIE_SECURE,
     sameSite: env.COOKIE_SAME_SITE,
+    path: '/',
   })
   return successResponse(res, { message: 'Vault locked. Session successfully terminated.' })
 }
