@@ -144,21 +144,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // 1. Grab the token BEFORE clearing storage
+    let token: string | null = null
     try {
-      apiClient.post('/auth/logout').catch(() => {
-        // Ignore network errors on logout
-      })
-    } finally {
-      setUser(null)
-      try {
-        localStorage.removeItem(STORAGE_KEY)
-        localStorage.removeItem(TOKEN_KEY)
-      } catch {
-        // noop
-      }
-      toast.info('Ledger Vault Locked. Session terminated.')
+      token = localStorage.getItem(TOKEN_KEY)
+    } catch {
+      // noop
     }
+
+    // 2. Clear local state immediately so UI reflects logout at once
+    setUser(null)
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+      localStorage.removeItem(TOKEN_KEY)
+    } catch {
+      // noop — private browsing may block localStorage
+    }
+
+    // 3. Tell the server to expire the HttpOnly session cookie.
+    //    Pass the token explicitly since localStorage is already cleared.
+    try {
+      await apiClient.post('/auth/logout', {}, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+    } catch {
+      // Network failure — local state is already cleared; safe to ignore.
+    }
+
+    toast.info('Ledger Vault Locked. Session terminated.')
   }, [])
 
   const value: AuthContextValue = {
