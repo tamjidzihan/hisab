@@ -4,6 +4,7 @@ import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
 import { parseToMinorUnits } from '@/lib/formatters'
+import { useAuth } from '@/features/auth/AuthContext'
 import type { Budget } from '@/types'
 
 export interface BudgetModalProps {
@@ -22,6 +23,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
   availableCategories,
 }) => {
   const isEditing = Boolean(initialBudget)
+  const { user } = useAuth()
 
   const [categoryId, setCategoryId] = useState('')
   const [limitStr, setLimitStr] = useState('')
@@ -58,7 +60,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
     const selectedCategory = availableCategories.find((c) => c.id === categoryId)
 
     onSave({
-      userId: 'usr-1',
+      userId: user?.id || '',
       categoryId: categoryId === 'overall' ? null : categoryId,
       categoryName: categoryId === 'overall' ? 'Overall Monthly Ceiling' : selectedCategory?.name,
       categoryColor: selectedCategory?.color || '#161d26',
@@ -130,4 +132,3 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
     </Modal>
   )
 }
-

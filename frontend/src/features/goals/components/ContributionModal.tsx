@@ -4,7 +4,7 @@ import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
 import { parseToMinorUnits } from '@/lib/formatters'
-import type { SavingsGoal } from '@/types'
+import type { Account, SavingsGoal } from '@/types'
 
 export interface ContributionModalProps {
   isOpen: boolean
@@ -13,12 +13,13 @@ export interface ContributionModalProps {
     goalId: string,
     amountMinor: number,
     date: string,
+    accountId?: string,
     accountName?: string,
     notes?: string
   ) => void
   goals: SavingsGoal[]
   defaultGoal?: SavingsGoal | null
-  availableAccounts?: string[]
+  availableAccounts?: Account[]
 }
 
 export const ContributionModal: React.FC<ContributionModalProps> = ({
@@ -27,14 +28,14 @@ export const ContributionModal: React.FC<ContributionModalProps> = ({
   onAddContribution,
   goals,
   defaultGoal,
-  availableAccounts = ['Prime Bank Current', 'Cash Vault', 'bKash Primary MFS', 'Nagad Wallet'],
+  availableAccounts = [],
 }) => {
   const activeGoals = goals.filter((g) => g.status !== 'completed')
 
   const [goalId, setGoalId] = useState('')
   const [amountStr, setAmountStr] = useState('')
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
-  const [accountName, setAccountName] = useState(availableAccounts[0] || 'Prime Bank Current')
+  const [accountId, setAccountId] = useState(availableAccounts[0]?.id || '')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -46,9 +47,10 @@ export const ContributionModal: React.FC<ContributionModalProps> = ({
     }
     setAmountStr('')
     setDate(new Date().toISOString().slice(0, 10))
+    setAccountId(availableAccounts[0]?.id || '')
     setNotes('')
     setError(null)
-  }, [defaultGoal, isOpen])
+  }, [defaultGoal, isOpen, availableAccounts])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,7 +67,8 @@ export const ContributionModal: React.FC<ContributionModalProps> = ({
       return
     }
 
-    onAddContribution(goalId, amountMinor, date, accountName, notes.trim() || undefined)
+    const account = availableAccounts.find((item) => item.id === accountId)
+    onAddContribution(goalId, amountMinor, date, account?.id, account?.name, notes.trim() || undefined)
     onClose()
   }
 
@@ -120,12 +123,17 @@ export const ContributionModal: React.FC<ContributionModalProps> = ({
 
         <Select
           label="Source Account Vault"
-          value={accountName}
-          onChange={(e) => setAccountName(e.target.value)}
-          options={availableAccounts.map((acc) => ({
-            value: acc,
-            label: acc,
-          }))}
+          value={accountId}
+          onChange={(e) => setAccountId(e.target.value)}
+          disabled={availableAccounts.length === 0}
+          options={
+            availableAccounts.length > 0
+              ? availableAccounts.map((account) => ({
+                  value: account.id,
+                  label: account.name,
+                }))
+              : [{ value: '', label: 'No accounts available', disabled: true }]
+          }
         />
 
         <Input
@@ -144,4 +152,3 @@ export const ContributionModal: React.FC<ContributionModalProps> = ({
     </Modal>
   )
 }
-

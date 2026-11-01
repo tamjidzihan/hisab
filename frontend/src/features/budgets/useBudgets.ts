@@ -6,7 +6,8 @@ import type { Budget } from '@/types'
 export type BudgetFilterType = 'all' | 'warning' | 'exceeded' | 'safe'
 
 export function useBudgets() {
-  const [currentDate, setCurrentDate] = useState<Date>(() => new Date('2026-11-01T00:00:00'))
+  const [today] = useState<Date>(() => new Date())
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date())
   const [budgetsMap, setBudgetsMap] = useState<Record<string, Budget[]>>({})
   const [filter, setFilter] = useState<BudgetFilterType>('all')
   const [isLoading, setIsLoading] = useState(false)
@@ -15,13 +16,13 @@ export function useBudgets() {
   const formattedMonthDisplay = useMemo(() => format(currentDate, 'MMMM yyyy'), [currentDate])
 
   const isCurrentMonth = useMemo(
-    () => isSameMonth(currentDate, new Date('2026-11-01T00:00:00')),
-    [currentDate]
+    () => isSameMonth(currentDate, today),
+    [currentDate, today]
   )
 
   const goToPreviousMonth = () => setCurrentDate((prev) => subMonths(prev, 1))
   const goToNextMonth = () => setCurrentDate((prev) => addMonths(prev, 1))
-  const goToCurrentMonth = () => setCurrentDate(new Date('2026-11-01T00:00:00'))
+  const goToCurrentMonth = () => setCurrentDate(new Date())
 
   // Fetch budgets for active month from backend
   const fetchBudgets = useCallback(async (monthKey: string) => {
@@ -35,7 +36,8 @@ export function useBudgets() {
           id: b.id,
           userId: b.userId,
           categoryId: b.categoryId,
-          categoryName: b.category?.name || b.categoryName || 'General',
+          categoryName:
+            b.category?.name || b.categoryName || (b.categoryId ? undefined : 'Overall Monthly Ceiling'),
           categoryColor: b.category?.color || b.categoryColor || '#059669',
           month: b.month,
           limitMinor: Number(b.limitMinor),

@@ -3,20 +3,26 @@ import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
 import { parseTransactionsFromCsv } from '../csvUtils'
 import { formatCurrency, formatDate } from '@/lib/formatters'
+import { useAuth } from '@/features/auth/AuthContext'
 import { UploadCloud, CheckCircle2, AlertTriangle } from 'lucide-react'
-import type { Transaction } from '@/types'
+import type { Account, Category, Transaction } from '@/types'
 
 export interface CsvImportModalProps {
   isOpen: boolean
   onClose: () => void
   onImport: (transactions: Transaction[]) => void
+  accounts: Account[]
+  categories: Category[]
 }
 
 export const CsvImportModal: React.FC<CsvImportModalProps> = ({
   isOpen,
   onClose,
   onImport,
+  accounts,
+  categories,
 }) => {
+  const { user } = useAuth()
   const [file, setFile] = useState<File | null>(null)
   const [parsedValid, setParsedValid] = useState<Transaction[]>([])
   const [parsingErrors, setParsingErrors] = useState<string[]>([])
@@ -32,7 +38,13 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
     const reader = new FileReader()
     reader.onload = (event) => {
       const text = event.target?.result as string
-      const { valid, errors } = parseTransactionsFromCsv(text)
+      if (!user) {
+        setParsedValid([])
+        setParsingErrors(['Your session has expired. Sign in again to import records.'])
+        setIsProcessing(false)
+        return
+      }
+      const { valid, errors } = parseTransactionsFromCsv(text, user.id, accounts, categories)
       setParsedValid(valid)
       setParsingErrors(errors)
       setIsProcessing(false)

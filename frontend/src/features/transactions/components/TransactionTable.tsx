@@ -144,7 +144,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
 
                   {/* Account Vault */}
                   <td className="py-3 px-4 text-[#64748b] text-xs hidden md:table-cell whitespace-nowrap">
-                    <span className="font-medium text-[#161d26]">{tx.accountName || 'Primary Vault'}</span>
+                    <span className="font-medium text-[#161d26]">{tx.accountName || '—'}</span>
                     {isTransfer && tx.transferDestinationAccountName && (
                       <div className="flex items-center gap-1 text-[10px] text-[#2563eb] font-mono mt-0.5">
                         <ArrowRightLeft className="w-2.5 h-2.5" />
@@ -285,4 +285,3 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
     </div>
   )
 }
-

@@ -67,11 +67,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           </div>
           <div className="flex justify-between">
             <span className="text-[#64748b]">Account:</span>
-            <span className="text-[#161d26]">{transaction.accountName || 'Primary'}</span>
+            <span className="text-[#161d26]">{transaction.accountName || '—'}</span>
           </div>
         </div>
       </div>
     </Modal>
   )
 }
-

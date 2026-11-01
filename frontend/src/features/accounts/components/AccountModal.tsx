@@ -4,6 +4,7 @@ import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
 import { parseToMinorUnits } from '@/lib/formatters'
+import { useAuth } from '@/features/auth/AuthContext'
 import type { Account, AccountType } from '@/types'
 
 export interface AccountModalProps {
@@ -20,6 +21,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   initialAccount,
 }) => {
   const isEditing = Boolean(initialAccount)
+  const { user } = useAuth()
 
   const [name, setName] = useState('')
   const [type, setType] = useState<AccountType>('bank')
@@ -56,9 +58,13 @@ export const AccountModal: React.FC<AccountModalProps> = ({
       setErrors(newErrors)
       return
     }
+    if (!user) {
+      setErrors({ name: 'Your session has expired. Sign in again to continue.' })
+      return
+    }
 
     onSave({
-      userId: 'usr-1',
+      userId: user.id,
       name: name.trim(),
       type,
       currency: 'BDT',
@@ -136,4 +142,3 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     </Modal>
   )
 }
-

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useTransactions } from './useTransactions'
 import { TransactionFilterBar } from './components/TransactionFilterBar'
@@ -7,10 +7,21 @@ import { TransactionModal } from './components/TransactionModal'
 import { CsvImportModal } from './components/CsvImportModal'
 import { DeleteConfirmModal } from './components/DeleteConfirmModal'
 import { exportTransactionsToCsv } from './csvUtils'
+import { useAccountsAndCategories } from '@/features/accounts/useAccountsAndCategories'
 import { formatCurrency } from '@/lib/formatters'
 import type { Transaction } from '@/types'
 
 export const TransactionsPage: React.FC = () => {
+  const { accounts, categories } = useAccountsAndCategories()
+  const activeAccounts = useMemo(
+    () => accounts.filter((account) => !account.isArchived),
+    [accounts]
+  )
+  const activeCategories = useMemo(
+    () => categories.filter((category) => !category.isArchived),
+    [categories]
+  )
+
   const {
     filteredTransactions,
     paginatedTransactions,
@@ -180,8 +191,8 @@ export const TransactionsPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveTransaction}
         initialTransaction={editingTransaction}
-        availableAccounts={availableAccounts}
-        availableCategories={availableCategories}
+        availableAccounts={activeAccounts}
+        availableCategories={activeCategories}
       />
 
       {/* CSV Import Modal */}
@@ -189,6 +200,8 @@ export const TransactionsPage: React.FC = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={handleImportSuccess}
+        accounts={activeAccounts}
+        categories={activeCategories}
       />
 
       {/* Delete Confirmation Modal */}

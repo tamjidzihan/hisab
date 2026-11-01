@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/common/Button'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -7,22 +7,21 @@ import { BudgetSummaryMetrics } from './components/BudgetSummaryMetrics'
 import { BudgetRowCard } from './components/BudgetRowCard'
 import { BudgetModal } from './components/BudgetModal'
 import { useBudgets } from './useBudgets'
+import { useAccountsAndCategories } from '@/features/accounts/useAccountsAndCategories'
 import { formatCurrency } from '@/lib/formatters'
 import { SlidersHorizontal, Plus, Copy } from 'lucide-react'
 import type { Budget } from '@/types'
 
-// Category reference for modal selection
-const AVAILABLE_CATEGORIES = [
-  { id: 'cat-food', name: 'Groceries & Dining', color: '#059669' },
-  { id: 'cat-bills', name: 'Utilities & Subscriptions', color: '#d97706' },
-  { id: 'cat-transport', name: 'Transportation & Fuel', color: '#2563eb' },
-  { id: 'cat-housing', name: 'Housing & Rent', color: '#161d26' },
-  { id: 'cat-health', name: 'Health & Medical', color: '#dc2626' },
-  { id: 'cat-personal', name: 'Personal Discretionary', color: '#64748b' },
-  { id: 'cat-education', name: 'Education & Learning', color: '#7c3aed' },
-]
-
 export const BudgetsPage: React.FC = () => {
+  const { categories } = useAccountsAndCategories()
+  const availableCategories = useMemo(
+    () =>
+      categories
+        .filter((category) => category.type === 'expense' && !category.isArchived)
+        .map(({ id, name, color }) => ({ id, name, color })),
+    [categories]
+  )
+
   const {
     activeBudgets,
     filteredBudgets,
@@ -216,7 +215,7 @@ export const BudgetsPage: React.FC = () => {
         onClose={() => setModalOpen(false)}
         onSave={handleSaveBudget}
         initialBudget={editingBudget}
-        availableCategories={AVAILABLE_CATEGORIES}
+        availableCategories={availableCategories}
       />
     </div>
   )

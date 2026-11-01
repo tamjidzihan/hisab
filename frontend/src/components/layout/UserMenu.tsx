@@ -22,7 +22,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   const menuRef = useRef<HTMLDivElement>(null)
 
   const effectiveName = userName || user?.name || 'Account Controller'
-  const effectiveEmail = userEmail || user?.email || 'user@hisab.local'
+  const effectiveEmail = userEmail || user?.email || ''
   const currencyLabel = `${user?.baseCurrency || 'BDT'} Ledger`
 
   useEffect(() => {
