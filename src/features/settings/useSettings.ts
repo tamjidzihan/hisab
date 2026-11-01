@@ -7,6 +7,48 @@ import type {
   SessionInfo,
 } from './types'
 import { exportTransactionsToCsv } from '@/features/transactions/csvUtils'
+import { useAuth } from '@/features/auth/AuthContext'
+
+interface SettingsProfileResponse {
+  id: string
+  name: string
+  email: string
+  householdName: string
+  role: string
+  joinedDate: string
+  baseCurrency?: RegionalSettings['baseCurrency']
+}
+
+interface SettingsSessionResponse {
+  id: string
+  device: string
+  browser: string
+  location?: string | null
+  ipAddress?: string | null
+  lastActive: string
+  isCurrent: boolean
+}
+
+const EMPTY_PROFILE: UserProfile = {
+  userId: '',
+  name: '',
+  email: '',
+  householdName: '',
+  role: '',
+  joinedDate: '',
+}
+
+const profileFromAuthUser = (user: ReturnType<typeof useAuth>['user']): UserProfile =>
+  user
+    ? {
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        householdName: user.householdName,
+        role: user.role,
+        joinedDate: user.joinedDate,
+      }
+    : EMPTY_PROFILE
 
 const INITIAL_REGIONAL: RegionalSettings = {
   baseCurrency: 'BDT',
@@ -27,64 +69,60 @@ const INITIAL_CALIPER: CaliperAlertSettings = {
 }
 
 export function useSettings() {
-  const [profile, setProfile] = useState<UserProfile>({
-    userId: '',
-    name: '',
-    email: '',
-    householdName: '',
-    role: '',
-    joinedDate: '',
-  })
+  const { user } = useAuth()
+  const [profile, setProfile] = useState<UserProfile>(() => profileFromAuthUser(user))
   const [regional, setRegional] = useState<RegionalSettings>(INITIAL_REGIONAL)
   const [caliper, setCaliper] = useState<CaliperAlertSettings>(INITIAL_CALIPER)
-  const [sessions, setSessions] = useState<SessionInfo[]>(INITIAL_SESSIONS)
+  const [sessions, setSessions] = useState<SessionInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   // Fetch profile and sessions from backend
   const fetchSettings = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      const [profRes, sessRes] = await Promise.all([
-        apiClient.get<{ success: boolean; data: { profile: any } }>('/settings/profile').catch(() => null),
-        apiClient.get<{ success: boolean; data: { sessions: any[] } }>('/settings/sessions').catch(() => null),
-      ])
+    setIsLoading(true)
+    const [profileResult, sessionsResult] = await Promise.allSettled([
+      apiClient.get<{ success: boolean; data: { profile: SettingsProfileResponse } }>('/settings/profile'),
+      apiClient.get<{ success: boolean; data: { sessions: SettingsSessionResponse[] } }>('/settings/sessions'),
+    ])
 
-      if (profRes?.data?.data?.profile) {
-        const p = profRes.data.data.profile
-        setProfile({
-          userId: p.id || 'usr-8921-bd',
-          name: p.name || 'Zihan Chowdhury',
-          email: p.email || 'zihan@hisab.local',
-          householdName: p.householdName || 'Chowdhury Household Ledger',
-          role: p.role || 'Primary Account Controller',
-          joinedDate: p.joinedDate || '2026-01-15',
-        })
-        if (p.baseCurrency) {
-          setRegional((prev) => ({ ...prev, baseCurrency: p.baseCurrency }))
-        }
+    if (profileResult.status === 'fulfilled') {
+      const p = profileResult.value.data.data.profile
+      setProfile({
+        userId: p.id || user?.id || '',
+        name: p.name || user?.name || '',
+        email: p.email || user?.email || '',
+        householdName: p.householdName || user?.householdName || '',
+        role: p.role || user?.role || '',
+        joinedDate: p.joinedDate || user?.joinedDate || '',
+      })
+      const baseCurrency = p.baseCurrency
+      if (baseCurrency) {
+        setRegional((prev) => ({ ...prev, baseCurrency }))
       }
+    } else {
+      setProfile(profileFromAuthUser(user))
+      console.error('Failed to load settings profile.', profileResult.reason)
+    }
 
-      if (sessRes?.data?.data?.sessions && Array.isArray(sessRes.data.data.sessions) && sessRes.data.data.sessions.length > 0) {
-        setSessions(sessRes.data.data.sessions.map((s: any) => ({
+    if (sessionsResult.status === 'fulfilled') {
+      setSessions(sessionsResult.value.data.data.sessions.map((s) => ({
           id: s.id,
           device: s.device,
           browser: s.browser,
-          location: s.location || 'Dhaka, Bangladesh',
-          ipAddress: s.ipAddress || '103.114.98.24',
+          location: s.location || 'Location unavailable',
+          ipAddress: s.ipAddress || 'Unavailable',
           lastActive: s.isCurrent ? 'Active Now' : new Date(s.lastActive).toLocaleDateString(),
           isCurrent: Boolean(s.isCurrent),
         })))
-      }
-    } catch {
-      // Retain fallback defaults
-    } finally {
-      setIsLoading(false)
+    } else {
+      setSessions([])
+      console.error('Failed to load active sessions.', sessionsResult.reason)
     }
-  }, [])
+    setIsLoading(false)
+  }, [user])
 
   useEffect(() => {
-    fetchSettings()
-  }, [fetchSettings])
+    void fetchSettings()
+  }, [fetchSettings, user])
 
   const updateProfile = useCallback((updates: Partial<UserProfile>) => {
     setProfile((prev) => ({ ...prev, ...updates }))
@@ -153,14 +191,7 @@ export function useSettings() {
     try {
       await apiClient.delete('/settings/purge').catch(() => {})
     } finally {
-      setProfile({
-        userId: '',
-        name: '',
-        email: '',
-        householdName: '',
-        role: '',
-        joinedDate: '',
-      })
+      setProfile(EMPTY_PROFILE)
       setRegional(INITIAL_REGIONAL)
       setCaliper(INITIAL_CALIPER)
       setSessions([])
@@ -183,4 +214,3 @@ export function useSettings() {
     refreshSettings: fetchSettings,
   }
 }
-

@@ -75,7 +75,7 @@ export const RecentTransactionsLedger: React.FC<RecentTransactionsLedgerProps> =
                     </td>
 
                     <td className="py-2.5 px-4 text-[#64748b] text-xs hidden sm:table-cell whitespace-nowrap">
-                      {tx.accountName || 'Primary Account'}
+                      {tx.accountName || '—'}
                       {isTransfer && tx.transferDestinationAccountName && (
                         <span className="inline-flex items-center gap-1 text-[10px] text-[#2563eb] ml-1 font-mono">
                           <ArrowRightLeft className="w-2.5 h-2.5" />
@@ -129,4 +129,3 @@ export const RecentTransactionsLedger: React.FC<RecentTransactionsLedgerProps> =
     </Card>
   )
 }
-

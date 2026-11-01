@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Button } from '@/components/common/Button'
 import { EmptyState } from '@/components/common/EmptyState'
 import { GoalsSummaryMetrics } from './components/GoalsSummaryMetrics'
@@ -7,11 +7,18 @@ import { ContributionHistoryTable } from './components/ContributionHistoryTable'
 import { GoalModal } from './components/GoalModal'
 import { ContributionModal } from './components/ContributionModal'
 import { useSavingsGoals, type GoalStatusFilter } from './useSavingsGoals'
+import { useAccountsAndCategories } from '@/features/accounts/useAccountsAndCategories'
 import { Plus, Target, ArrowDownToLine } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SavingsGoal } from '@/types'
 
 export const GoalsPage: React.FC = () => {
+  const { accounts } = useAccountsAndCategories()
+  const availableAccounts = useMemo(
+    () => accounts.filter((account) => !account.isArchived),
+    [accounts]
+  )
+
   const {
     filteredGoals,
     goals,
@@ -66,10 +73,11 @@ export const GoalsPage: React.FC = () => {
     goalId: string,
     amountMinor: number,
     date: string,
+    accountId?: string,
     accountName?: string,
     notes?: string
   ) => {
-    const res = addContribution(goalId, amountMinor, date, accountName, notes)
+    const res = addContribution(goalId, amountMinor, date, accountId, accountName, notes)
     if (res) {
       toast.success('Deposit successfully recorded into savings goal')
     }
@@ -189,6 +197,7 @@ export const GoalsPage: React.FC = () => {
         onAddContribution={handleAddDeposit}
         goals={goals}
         defaultGoal={depositTargetGoal}
+        availableAccounts={availableAccounts}
       />
     </div>
   )

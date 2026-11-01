@@ -28,7 +28,7 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
       .map((n) => n[0])
       .join('')
       .substring(0, 2)
-      .toUpperCase() || 'HB'
+      .toUpperCase() || 'AC'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,7 +44,7 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
     onSave({
       name: name.trim(),
       email: email.trim(),
-      householdName: householdName.trim() || 'Personal Ledger',
+      householdName: householdName.trim(),
     })
     setHasChanges(false)
     toast.success('User identity and ledger profile saved')
@@ -92,17 +92,14 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
 
           <div className="space-y-1.5 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-sm text-[#161d26]">{name}</span>
+              <span className="font-bold text-sm text-[#161d26]">{name || 'Account profile'}</span>
               <span className="text-[11px] font-mono text-[#64748b] bg-white px-2 py-0.5 rounded border border-[#d2d9e4]">
-                {profile.role}
+                {profile.role || '—'}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[#64748b]">
               <span className="inline-flex items-center gap-1">
-                <Hash className="w-3 h-3 text-[#94a3b8]" /> {profile.userId}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3 h-3 text-[#94a3b8]" /> Enrolled: {profile.joinedDate}
+                <Calendar className="w-3 h-3 text-[#94a3b8]" /> Enrolled: {profile.joinedDate || '—'}
               </span>
             </div>
           </div>
@@ -117,7 +114,7 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
               setName(e.target.value)
               setHasChanges(true)
             }}
-            placeholder="e.g. Zihan Chowdhury"
+            placeholder="Enter your full name"
             required
           />
 
@@ -129,7 +126,7 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
               setEmail(e.target.value)
               setHasChanges(true)
             }}
-            placeholder="e.g. zihan@hisab.local"
+            placeholder="name@example.com"
             required
           />
         </div>
@@ -141,7 +138,7 @@ export const ProfileSettingsCard: React.FC<ProfileSettingsCardProps> = ({
             setHouseholdName(e.target.value)
             setHasChanges(true)
           }}
-          placeholder="e.g. Chowdhury Household Ledger"
+          placeholder="e.g. Household Ledger"
           helperText="Displayed on financial exports and official PDF summary statements."
         />
       </form>

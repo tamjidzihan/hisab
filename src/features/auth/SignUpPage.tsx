@@ -103,7 +103,7 @@ export const SignUpPage: React.FC = () => {
             label="Controller Name"
             type="text"
             id="signup-name"
-            placeholder="e.g. Zihan Chowdhury"
+            placeholder="Enter your full name"
             value={name}
             onChange={(e) => {
               setName(e.target.value)
@@ -119,7 +119,7 @@ export const SignUpPage: React.FC = () => {
             label="Household / Vault"
             type="text"
             id="signup-household"
-            placeholder="e.g. Chowdhury Household"
+            placeholder="e.g. Household Ledger"
             value={householdName}
             onChange={(e) => setHouseholdName(e.target.value)}
             prefixElement={<Building2 className="w-4 h-4" />}
@@ -134,7 +134,7 @@ export const SignUpPage: React.FC = () => {
               type="email"
               id="signup-email"
               autoComplete="email"
-              placeholder="name@household.local"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               prefixElement={<Mail className="w-4 h-4" />}
@@ -308,4 +308,3 @@ export const SignUpPage: React.FC = () => {
     </div>
   )
 }
-

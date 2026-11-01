@@ -91,11 +91,19 @@ export const SettingsPage: React.FC = () => {
       {/* Tab Panels */}
       <div className="space-y-6">
         {(activeTab === 'all' || activeTab === 'profile') && (
-          <ProfileSettingsCard profile={profile} onSave={updateProfile} />
+          <ProfileSettingsCard
+            key={`${profile.userId}-${profile.name}-${profile.email}-${profile.householdName}`}
+            profile={profile}
+            onSave={updateProfile}
+          />
         )}
 
         {(activeTab === 'all' || activeTab === 'regional') && (
-          <RegionalCurrencyCard regional={regional} onSave={updateRegional} />
+          <RegionalCurrencyCard
+            key={`${regional.baseCurrency}-${regional.dateFormat}-${regional.decimalPrecision}-${regional.weekStartDay}-${regional.fiscalCycleDay}`}
+            regional={regional}
+            onSave={updateRegional}
+          />
         )}
 
         {(activeTab === 'all' || activeTab === 'caliper') && (

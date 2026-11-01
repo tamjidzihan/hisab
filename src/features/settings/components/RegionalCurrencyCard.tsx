@@ -4,6 +4,7 @@ import { Button } from '@/components/common/Button'
 import { Select } from '@/components/common/Select'
 import { Badge } from '@/components/common/Badge'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
 import { Globe, Save, CheckCircle2 } from 'lucide-react'
 import type { RegionalSettings, SupportedCurrency, DateFormatOption, WeekStartOption } from '../types'
 
@@ -47,7 +48,13 @@ export const RegionalCurrencyCard: React.FC<RegionalCurrencyCardProps> = ({
     toast.success('Regional conventions and base currency applied')
   }
 
-  const sampleAmount = decimalPrecision === '2' ? '125,450.00' : '125,450'
+  const [today] = useState(() => new Date())
+  const previewDate =
+    dateFormat === 'YYYY-MM-DD'
+      ? format(today, 'yyyy-MM-dd')
+      : dateFormat === 'DD/MM/YYYY'
+        ? format(today, 'dd/MM/yyyy')
+        : format(today, 'dd MMM yyyy')
   const symbol = CURRENCY_SYMBOLS[baseCurrency] || '৳'
 
   return (
@@ -87,24 +94,20 @@ export const RegionalCurrencyCard: React.FC<RegionalCurrencyCardProps> = ({
         {/* Live Ledger Preview Badge */}
         <div className="bg-[#f8fafc] border border-[#d2d9e4] p-4 rounded-[4px] space-y-2.5">
           <span className="text-[10px] font-mono uppercase tracking-wider text-[#64748b] block font-semibold">
-            Real-Time Output Preview
+            Formatting Preview
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
             <div className="p-2.5 bg-white border border-[#e2e8f0] rounded-[3px]">
               <span className="text-[10px] text-[#64748b] uppercase block">Monetary Format</span>
               <span className="text-base font-bold text-[#161d26] tabular-nums mt-0.5 block">
-                {symbol} {sampleAmount}
+                {symbol} —
               </span>
             </div>
 
             <div className="p-2.5 bg-white border border-[#e2e8f0] rounded-[3px]">
-              <span className="text-[10px] text-[#64748b] uppercase block">Sample Ledger Date</span>
+              <span className="text-[10px] text-[#64748b] uppercase block">Current Date</span>
               <span className="text-sm font-semibold text-[#161d26] tabular-nums mt-0.5 block">
-                {dateFormat === 'YYYY-MM-DD'
-                  ? '2026-11-01'
-                  : dateFormat === 'DD/MM/YYYY'
-                  ? '01/11/2026'
-                  : '01 Nov 2026'}
+                {previewDate}
               </span>
             </div>
 
@@ -146,9 +149,9 @@ export const RegionalCurrencyCard: React.FC<RegionalCurrencyCardProps> = ({
               setHasChanges(true)
             }}
             options={[
-              { value: 'DD MMM YYYY', label: 'DD MMM YYYY (e.g. 01 Nov 2026)' },
+              { value: 'DD MMM YYYY', label: 'DD MMM YYYY (day, month, year)' },
               { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (ISO 8601 Standard)' },
-              { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY (e.g. 01/11/2026)' },
+              { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY (day/month/year)' },
             ]}
           />
         </div>

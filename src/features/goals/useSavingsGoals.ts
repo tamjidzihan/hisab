@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { apiClient } from '@/lib/api'
+import { useAuth } from '@/features/auth/AuthContext'
 import type { SavingsGoal } from '@/types'
 
 export interface GoalContribution {
@@ -8,6 +9,7 @@ export interface GoalContribution {
   goalName: string
   amountMinor: number
   date: string
+  accountId?: string
   accountName?: string
   notes?: string
 }
@@ -15,6 +17,7 @@ export interface GoalContribution {
 export type GoalStatusFilter = 'all' | 'active' | 'completed' | 'paused'
 
 export function useSavingsGoals() {
+  const { user } = useAuth()
   const [goals, setGoals] = useState<SavingsGoal[]>([])
   const [contributions, setContributions] = useState<GoalContribution[]>([])
   const [statusFilter, setStatusFilter] = useState<GoalStatusFilter>('all')
@@ -117,7 +120,7 @@ export function useSavingsGoals() {
       const goal: SavingsGoal = {
         ...newGoal,
         id: tempId,
-        userId: 'usr-1',
+        userId: user?.id || '',
       }
       setGoals((prev) => [goal, ...prev])
 
@@ -135,7 +138,7 @@ export function useSavingsGoals() {
 
       return goal
     },
-    []
+    [user?.id]
   )
 
   const updateGoal = useCallback((id: string, updates: Partial<SavingsGoal>) => {
@@ -158,6 +161,7 @@ export function useSavingsGoals() {
       goalId: string,
       amountMinor: number,
       date: string,
+      accountId?: string,
       accountName?: string,
       notes?: string
     ) => {
@@ -170,6 +174,7 @@ export function useSavingsGoals() {
         goalName: targetGoal.name,
         amountMinor,
         date,
+        accountId,
         accountName,
         notes,
       }
@@ -194,6 +199,7 @@ export function useSavingsGoals() {
 
       apiClient.post(`/goals/${goalId}/contributions`, {
         amountMinor,
+        accountId,
         note: notes,
       }).catch(() => {})
 

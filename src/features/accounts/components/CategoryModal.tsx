@@ -3,6 +3,7 @@ import { Modal } from '@/components/common/Modal'
 import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
+import { useAuth } from '@/features/auth/AuthContext'
 import type { Category } from '@/types'
 
 export interface CategoryModalProps {
@@ -30,6 +31,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   initialCategory,
 }) => {
   const isEditing = Boolean(initialCategory)
+  const { user } = useAuth()
 
   const [name, setName] = useState('')
   const [type, setType] = useState<'expense' | 'income'>('expense')
@@ -57,7 +59,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     }
 
     onSave({
-      userId: 'usr-1',
+      userId: user?.id || null,
       name: name.trim(),
       type,
       color,
@@ -130,4 +132,3 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     </Modal>
   )
 }
-

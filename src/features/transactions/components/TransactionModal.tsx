@@ -4,15 +4,16 @@ import { Button } from '@/components/common/Button'
 import { Input } from '@/components/common/Input'
 import { Select } from '@/components/common/Select'
 import { parseToMinorUnits } from '@/lib/formatters'
-import type { Transaction, TransactionType } from '@/types'
+import { useAuth } from '@/features/auth/AuthContext'
+import type { Account, Category, Transaction, TransactionType } from '@/types'
 
 export interface TransactionModalProps {
   isOpen: boolean
   onClose: () => void
   onSave: (data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => void
   initialTransaction?: Transaction | null
-  availableAccounts: string[]
-  availableCategories: string[]
+  availableAccounts: Account[]
+  availableCategories: Category[]
 }
 
 export const TransactionModal: React.FC<TransactionModalProps> = ({
@@ -24,6 +25,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   availableCategories,
 }) => {
   const isEditing = Boolean(initialTransaction)
+  const { user } = useAuth()
 
   // Form State
   const [type, setType] = useState<TransactionType>('expense')
@@ -33,9 +35,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   )
   const [description, setDescription] = useState('')
   const [payee, setPayee] = useState('')
-  const [accountName, setAccountName] = useState('Prime Bank Current')
-  const [destinationAccountName, setDestinationAccountName] = useState('bKash Primary MFS')
-  const [categoryName, setCategoryName] = useState('Groceries & Dining')
+  const [accountId, setAccountId] = useState('')
+  const [destinationAccountId, setDestinationAccountId] = useState('')
+  const [categoryId, setCategoryId] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Bank Transfer')
   const [notes, setNotes] = useState('')
 
@@ -49,13 +51,11 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setTransactionDate(initialTransaction.transactionDate)
       setDescription(initialTransaction.description)
       setPayee(initialTransaction.payee || '')
-      setAccountName(initialTransaction.accountName || availableAccounts[0] || 'Primary Vault')
-      setDestinationAccountName(
-        initialTransaction.transferDestinationAccountName ||
-          availableAccounts[1] ||
-          'Secondary Vault'
+      setAccountId(initialTransaction.accountId || availableAccounts[0]?.id || '')
+      setDestinationAccountId(
+        initialTransaction.transferDestinationAccountId || availableAccounts[1]?.id || ''
       )
-      setCategoryName(initialTransaction.categoryName || availableCategories[0] || 'General')
+      setCategoryId(initialTransaction.categoryId || '')
       setPaymentMethod(initialTransaction.paymentMethod || 'Bank Transfer')
       setNotes(initialTransaction.notes || '')
     } else {
@@ -64,9 +64,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setTransactionDate(new Date().toISOString().slice(0, 10))
       setDescription('')
       setPayee('')
-      setAccountName(availableAccounts[0] || 'Prime Bank Current')
-      setDestinationAccountName(availableAccounts[1] || 'bKash Primary MFS')
-      setCategoryName(availableCategories[0] || 'Groceries & Dining')
+      setAccountId(availableAccounts[0]?.id || '')
+      setDestinationAccountId(availableAccounts[1]?.id || '')
+      setCategoryId('')
       setPaymentMethod('Bank Transfer')
       setNotes('')
     }
@@ -76,6 +76,9 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
+    const account = availableAccounts.find((item) => item.id === accountId)
+    const destinationAccount = availableAccounts.find((item) => item.id === destinationAccountId)
+    const category = availableCategories.find((item) => item.id === categoryId)
 
     const amountMinor = parseToMinorUnits(amountStr)
     if (amountMinor <= 0) {
@@ -90,7 +93,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       newErrors.date = 'Transaction date is required.'
     }
 
-    if (type === 'transfer' && accountName === destinationAccountName) {
+    if (!user) {
+      newErrors.account = 'Your session has expired. Sign in again to continue.'
+    } else if (!account) {
+      newErrors.account = 'Select an account before posting this transaction.'
+    }
+
+    if (type === 'transfer' && !destinationAccount) {
+      newErrors.destinationAccount = 'Select a destination account.'
+    }
+
+    if (type === 'transfer' && accountId === destinationAccountId) {
       newErrors.destinationAccount = 'Destination vault cannot be identical to source vault.'
     }
 
@@ -98,27 +111,23 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       setErrors(newErrors)
       return
     }
+    if (!user || !account) return
 
     onSave({
-      userId: 'usr-1',
-      accountId: `acc-${accountName.toLowerCase().replace(/\s+/g, '-')}`,
-      accountName,
-      categoryId: type === 'transfer' ? null : `cat-${categoryName.toLowerCase().replace(/\s+/g, '-')}`,
-      categoryName: type === 'transfer' ? undefined : categoryName,
+      userId: user.id,
+      accountId,
+      accountName: account?.name,
+      categoryId: type === 'transfer' ? null : category?.id || null,
+      categoryName: type === 'transfer' ? undefined : category?.name,
       type,
       amountMinor,
-      currency: 'BDT',
+      currency: account?.currency || 'BDT',
       transactionDate,
       description: description.trim(),
       payee: payee.trim() || undefined,
       paymentMethod,
-      transferGroupId: type === 'transfer' ? `trf-${Date.now()}` : undefined,
-      transferDestinationAccountId:
-        type === 'transfer'
-          ? `acc-${destinationAccountName.toLowerCase().replace(/\s+/g, '-')}`
-          : undefined,
-      transferDestinationAccountName:
-        type === 'transfer' ? destinationAccountName : undefined,
+      transferDestinationAccountId: type === 'transfer' ? destinationAccountId : undefined,
+      transferDestinationAccountName: type === 'transfer' ? destinationAccount?.name : undefined,
       notes: notes.trim() || undefined,
     })
 
@@ -232,25 +241,43 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select
             label={type === 'transfer' ? 'Source Vault' : 'Account Vault'}
-            value={accountName}
-            onChange={(e) => setAccountName(e.target.value)}
-            options={availableAccounts.map((acc) => ({ value: acc, label: acc }))}
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
+            error={errors.account}
+            disabled={availableAccounts.length === 0}
+            options={
+              availableAccounts.length > 0
+                ? availableAccounts.map((account) => ({ value: account.id, label: account.name }))
+                : [{ value: '', label: 'No accounts available', disabled: true }]
+            }
           />
 
           {type === 'transfer' ? (
             <Select
               label="Destination Vault"
-              value={destinationAccountName}
-              onChange={(e) => setDestinationAccountName(e.target.value)}
+              value={destinationAccountId}
+              onChange={(e) => setDestinationAccountId(e.target.value)}
               error={errors.destinationAccount}
-              options={availableAccounts.map((acc) => ({ value: acc, label: acc }))}
+              disabled={availableAccounts.length < 2}
+              options={
+                availableAccounts.length > 0
+                  ? availableAccounts
+                      .filter((account) => account.id !== accountId)
+                      .map((account) => ({ value: account.id, label: account.name }))
+                  : [{ value: '', label: 'No accounts available', disabled: true }]
+              }
             />
           ) : (
             <Select
               label="Category"
-              value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              options={availableCategories.map((cat) => ({ value: cat, label: cat }))}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              options={[
+                { value: '', label: 'No category' },
+                ...availableCategories
+                  .filter((category) => category.type === type)
+                  .map((category) => ({ value: category.id, label: category.name })),
+              ]}
             />
           )}
         </div>
@@ -287,4 +314,3 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
     </Modal>
   )
 }
-

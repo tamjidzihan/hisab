@@ -72,7 +72,7 @@ export const SignInPage: React.FC = () => {
           name="email"
           autoComplete="email"
           autoFocus
-          placeholder="name@household.local"
+          placeholder="name@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           prefixElement={<Mail className="w-4 h-4" />}
@@ -154,4 +154,3 @@ export const SignInPage: React.FC = () => {
     </div>
   )
 }
-

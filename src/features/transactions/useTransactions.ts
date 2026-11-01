@@ -36,7 +36,7 @@ export function useTransactions() {
           id: tx.id,
           userId: tx.userId,
           accountId: tx.accountId,
-          accountName: tx.account?.name || tx.accountName || 'Account Vault',
+          accountName: tx.account?.name || tx.accountName || undefined,
           categoryId: tx.categoryId,
           categoryName: tx.category?.name || tx.categoryName || undefined,
           categoryColor: tx.category?.color || tx.categoryColor || undefined,
@@ -249,6 +249,7 @@ export function useTransactions() {
       notes: tx.notes,
       accountId: tx.accountId,
       categoryId: tx.categoryId,
+      toAccountId: tx.transferDestinationAccountId,
     }).catch(() => {})
   }, [])
 
@@ -265,6 +266,7 @@ export function useTransactions() {
         notes: tx.notes,
         accountId: tx.accountId,
         categoryId: tx.categoryId,
+        toAccountId: tx.transferDestinationAccountId,
       }).catch(() => {})
     })
   }, [])

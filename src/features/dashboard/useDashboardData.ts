@@ -22,7 +22,8 @@ const EMPTY_DASHBOARD_BASELINE = (monthKey: string): DashboardSummary => ({
 })
 
 export function useDashboardData() {
-  const [currentDate, setCurrentDate] = useState<Date>(() => new Date('2026-11-01T00:00:00'))
+  const [today] = useState<Date>(() => new Date())
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date())
 
   const currentMonthKey = useMemo(() => format(currentDate, 'yyyy-MM'), [currentDate])
   const formattedMonthDisplay = useMemo(() => format(currentDate, 'MMMM yyyy'), [currentDate])
@@ -36,12 +37,12 @@ export function useDashboardData() {
   }
 
   const goToCurrentMonth = () => {
-    setCurrentDate(new Date('2026-11-01T00:00:00'))
+    setCurrentDate(new Date())
   }
 
   const isCurrentMonth = useMemo(() => {
-    return isSameMonth(currentDate, new Date('2026-11-01T00:00:00'))
-  }, [currentDate])
+    return isSameMonth(currentDate, today)
+  }, [currentDate, today])
 
   const query = useQuery<DashboardSummary>({
     queryKey: ['dashboard', currentMonthKey],

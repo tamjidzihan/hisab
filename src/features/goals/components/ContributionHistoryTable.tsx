@@ -56,7 +56,7 @@ export const ContributionHistoryTable: React.FC<ContributionHistoryTableProps> =
                     {item.goalName}
                   </td>
                   <td className="py-2.5 px-4 text-[#64748b] font-mono text-[11px]">
-                    {item.accountName || 'Primary Checking'}
+                    {item.accountName || '—'}
                   </td>
                   <td className="py-2.5 px-4 text-[#64748b] text-[11px] max-w-[240px] truncate">
                     {item.notes || '—'}
@@ -76,4 +76,3 @@ export const ContributionHistoryTable: React.FC<ContributionHistoryTableProps> =
     </Card>
   )
 }
-
