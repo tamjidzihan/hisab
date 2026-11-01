@@ -33,41 +33,69 @@ const ICON_MAP = {
 export const InteractiveTourOverlay: React.FC = () => {
   const { isTourActive, currentStepIndex, nextStep, prevStep, skipTour } = useTourGuide()
   const step = TOUR_STEPS[currentStepIndex]
-  const [spotlight, setSpotlight] = useState<{ target: string; rect: DOMRect } | null>(null)
+  const [spotlight, setSpotlight] = useState<{
+    target: string
+    rect: DOMRect
+    isQuickLogModal: boolean
+  } | null>(null)
   const targetRect = spotlight?.target === step.target ? spotlight.rect : null
+  const isQuickLogModalSpotlight = spotlight?.isQuickLogModal === true
 
   useEffect(() => {
     if (!isTourActive) return
 
     let intervalId: number | undefined
-    let observer: ResizeObserver | undefined
+    let resizeObserver: ResizeObserver | undefined
     let target: HTMLElement | null = null
 
     const updateTargetRect = () => {
-      if (!target?.isConnected) {
-        target = document.querySelector<HTMLElement>(
-          `[data-tour-target="${step.target}"]`
-        )
-        if (!target) return
-        target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-        if (intervalId) {
-          window.clearInterval(intervalId)
-          intervalId = undefined
+      const quickLogModal =
+        step.target === 'quick-log'
+          ? document.querySelector<HTMLElement>('[data-tour-target="quick-log-modal"]')
+          : null
+      const nextTarget =
+        quickLogModal ??
+        document.querySelector<HTMLElement>(`[data-tour-target="${step.target}"]`)
+
+      if (nextTarget !== target) {
+        target = nextTarget
+        resizeObserver?.disconnect()
+        if (!target) {
+          setSpotlight(null)
+          return
         }
-        observer = new ResizeObserver(updateTargetRect)
-        observer.observe(target)
+
+        if (!quickLogModal) {
+          target.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+        }
+        resizeObserver = new ResizeObserver(updateTargetRect)
+        resizeObserver.observe(target)
       }
 
-      setSpotlight({ target: step.target, rect: target.getBoundingClientRect() })
+      if (!target) return
+
+      setSpotlight({
+        target: step.target,
+        rect: target.getBoundingClientRect(),
+        isQuickLogModal: target === quickLogModal,
+      })
+
+      if (!quickLogModal && intervalId) {
+        window.clearInterval(intervalId)
+        intervalId = undefined
+      }
     }
 
+    const mutationObserver = new MutationObserver(updateTargetRect)
     intervalId = window.setInterval(updateTargetRect, 100)
+    mutationObserver.observe(document.body, { childList: true, subtree: true })
     window.addEventListener('resize', updateTargetRect)
     window.addEventListener('scroll', updateTargetRect, true)
 
     return () => {
       if (intervalId) window.clearInterval(intervalId)
-      observer?.disconnect()
+      resizeObserver?.disconnect()
+      mutationObserver.disconnect()
       window.removeEventListener('resize', updateTargetRect)
       window.removeEventListener('scroll', updateTargetRect, true)
     }
@@ -103,7 +131,10 @@ export const InteractiveTourOverlay: React.FC = () => {
         <div className="fixed inset-0 z-[61] bg-[#161d26]/40" aria-hidden="true" />
       )}
 
-      <div className="fixed z-[62] bottom-3 left-3 right-3 sm:bottom-6 sm:left-auto sm:right-6 sm:w-[min(28rem,calc(100vw-3rem))] pointer-events-auto bg-white border border-[#161d26] rounded-[6px] shadow-[0_16px_36px_rgba(22,29,38,0.22)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <div
+        hidden={isQuickLogModalSpotlight}
+        className="fixed z-[62] bottom-3 left-3 right-3 sm:bottom-6 sm:left-auto sm:right-6 sm:w-[min(28rem,calc(100vw-3rem))] pointer-events-auto bg-white border border-[#161d26] rounded-[6px] shadow-[0_16px_36px_rgba(22,29,38,0.22)] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200"
+      >
         {/* Top 3px Precision Drafting Caliper Line */}
         <div className="h-1 bg-[#e2e8f0] relative w-full overflow-hidden">
           <div

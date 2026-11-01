@@ -10,6 +10,7 @@ export interface ModalProps {
   children: React.ReactNode
   footer?: React.ReactNode
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl'
+  tourTarget?: string
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -20,6 +21,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   footer,
   maxWidth = 'md',
+  tourTarget,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -56,6 +58,7 @@ export const Modal: React.FC<ModalProps> = ({
           'w-full bg-white border border-[#d2d9e4] rounded-[6px] shadow-[0_8px_30px_rgba(22,29,38,0.12)] overflow-hidden flex flex-col max-h-[90vh]',
           maxWidths[maxWidth]
         )}
+        data-tour-target={tourTarget}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -90,4 +93,3 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   )
 }
-
