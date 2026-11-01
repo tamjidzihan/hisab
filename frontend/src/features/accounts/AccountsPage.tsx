@@ -107,12 +107,12 @@ export const AccountsPage: React.FC = () => {
     setCategoryModalOpen(true)
   }
 
-  const handleSaveCategory = (data: Omit<Category, 'id' | 'isArchived'>) => {
+  const handleSaveCategory = async (data: Omit<Category, 'id' | 'isArchived'>) => {
     if (editingCategory) {
-      updateCategory(editingCategory.id, data)
+      await updateCategory(editingCategory.id, data)
       toast.success(`Category "${data.name}" updated.`)
     } else {
-      createCategory(data)
+      await createCategory(data)
       toast.success(`Category "${data.name}" added to classifications.`)
     }
   }
@@ -347,6 +347,7 @@ export const AccountsPage: React.FC = () => {
       />
 
       <CategoryModal
+        key={categoryModalOpen ? editingCategory?.id ?? 'new' : 'closed'}
         isOpen={categoryModalOpen}
         onClose={() => setCategoryModalOpen(false)}
         onSave={handleSaveCategory}

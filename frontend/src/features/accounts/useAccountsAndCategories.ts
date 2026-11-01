@@ -190,37 +190,28 @@ export function useAccountsAndCategories() {
   )
 
   // Category CRUD
-  const createCategory = useCallback((newCat: Omit<Category, 'id' | 'isArchived'>) => {
-    const tempId = `cat-${Date.now()}`
-    const category: Category = {
-      ...newCat,
-      id: tempId,
-      isArchived: false,
-    }
-    setCategories((prev) => [...prev, category])
+  const createCategory = useCallback(
+    async (newCat: Omit<Category, 'id' | 'isArchived'>) => {
+      const response = await apiClient.post<{ data: { category: Category } }>('/categories', {
+        name: newCat.name,
+        type: newCat.type,
+        color: newCat.color,
+        icon: newCat.icon,
+      })
+      const category = response.data.data.category
+      setCategories((prev) => [...prev, category])
+      return category
+    },
+    []
+  )
 
-    apiClient.post('/categories', {
-      name: newCat.name,
-      type: newCat.type,
-      color: newCat.color,
-      icon: newCat.icon,
-    }).then((res) => {
-      if (res.data?.data?.category?.id) {
-        setCategories((prev) =>
-          prev.map((c) => (c.id === tempId ? { ...c, id: res.data.data.category.id } : c))
-        )
-      }
-    }).catch(() => {})
-
-    return category
-  }, [])
-
-  const updateCategory = useCallback((id: string, updates: Partial<Category>) => {
-    setCategories((prev) =>
-      prev.map((cat) => (cat.id === id ? { ...cat, ...updates } : cat))
+  const updateCategory = useCallback(async (id: string, updates: Partial<Category>) => {
+    const response = await apiClient.patch<{ data: { category: Category } }>(
+      `/categories/${id}`,
+      updates
     )
-
-    apiClient.patch(`/categories/${id}`, updates).catch(() => {})
+    const category = response.data.data.category
+    setCategories((prev) => prev.map((item) => (item.id === id ? category : item)))
   }, [])
 
   const deleteCategory = useCallback((id: string) => {
