@@ -9,6 +9,7 @@ import { BudgetModal } from './components/BudgetModal'
 import { useBudgets } from './useBudgets'
 import { useAccountsAndCategories } from '@/features/accounts/useAccountsAndCategories'
 import { formatCurrency } from '@/lib/formatters'
+import { BudgetsSkeleton } from '@/components/common/SkeletonScreens'
 import { SlidersHorizontal, Plus, Copy } from 'lucide-react'
 import type { Budget } from '@/types'
 
@@ -37,10 +38,13 @@ export const BudgetsPage: React.FC = () => {
     updateBudget,
     deleteBudget,
     copyBudgetsFromPreviousMonth,
+    isLoading,
   } = useBudgets()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
+
+  if (isLoading) return <BudgetsSkeleton />
 
   const handleOpenCreate = () => {
     setEditingBudget(null)

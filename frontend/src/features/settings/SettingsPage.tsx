@@ -6,6 +6,7 @@ import { CaliperThresholdsCard } from './components/CaliperThresholdsCard'
 import { DataManagementCard } from './components/DataManagementCard'
 import { SecuritySessionsCard } from './components/SecuritySessionsCard'
 import { useSettings } from './useSettings'
+import { SettingsSkeleton } from '@/components/common/SkeletonScreens'
 import {
   User,
   Globe,
@@ -31,9 +32,12 @@ export const SettingsPage: React.FC = () => {
     exportFullJsonArchive,
     exportCsv,
     purgeAllData,
+    isLoading,
   } = useSettings()
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('all')
+
+  if (isLoading) return <SettingsSkeleton />
 
   const tabs: Array<{ id: SettingsTab; label: string; icon: React.ReactNode }> = [
     { id: 'all', label: 'Overview (All)', icon: <Layers className="w-4.5 h-4.5" /> },
