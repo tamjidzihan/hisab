@@ -124,6 +124,11 @@ const createTransaction = async (req, res, next) => {
         return errorResponse(res, 'Destination account vault not found.', 404)
       }
 
+      if (sourceAccount.currency !== destAccount.currency) {
+        await t.rollback()
+        return errorResponse(res, 'Transfers require source and destination accounts to use the same currency.', 400)
+      }
+
       const transferGroupId = uuidv4()
 
       // Outflow leg from source vault
@@ -134,6 +139,7 @@ const createTransaction = async (req, res, next) => {
           categoryId: null,
           type: 'transfer',
           amountMinor,
+          currency: sourceAccount.currency,
           transactionDate,
           description: description || `Transfer to ${destAccount.name}`,
           payee: destAccount.name,
@@ -153,6 +159,7 @@ const createTransaction = async (req, res, next) => {
           categoryId: null,
           type: 'transfer',
           amountMinor,
+          currency: sourceAccount.currency,
           transactionDate,
           description: description || `Transfer from ${sourceAccount.name}`,
           payee: sourceAccount.name,
@@ -175,6 +182,7 @@ const createTransaction = async (req, res, next) => {
           categoryId: categoryId || null,
           type,
           amountMinor,
+          currency: sourceAccount.currency,
           transactionDate,
           description: description || 'Uncategorized Entry',
           payee,
@@ -341,4 +349,3 @@ module.exports = {
   deleteTransaction,
   exportTransactions,
 }
-

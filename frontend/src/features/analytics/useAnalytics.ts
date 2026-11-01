@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { apiClient } from '@/lib/api'
+import { LEDGER_UPDATED_EVENT } from '@/lib/ledgerEvents'
 
 export type AnalyticsTimeRange = '6m' | '12m' | 'ytd' | 'month'
 
@@ -98,6 +99,8 @@ export function useAnalytics() {
 
   useEffect(() => {
     fetchAnalytics()
+    window.addEventListener(LEDGER_UPDATED_EVENT, fetchAnalytics)
+    return () => window.removeEventListener(LEDGER_UPDATED_EVENT, fetchAnalytics)
   }, [fetchAnalytics])
 
   // Filtered monthly trend data

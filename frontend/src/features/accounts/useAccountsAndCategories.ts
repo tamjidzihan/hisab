@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { apiClient } from '@/lib/api'
+import { LEDGER_UPDATED_EVENT } from '@/lib/ledgerEvents'
 import type { Account, Category } from '@/types'
 
 export function useAccountsAndCategories() {
@@ -57,6 +58,8 @@ export function useAccountsAndCategories() {
 
   useEffect(() => {
     fetchData()
+    window.addEventListener(LEDGER_UPDATED_EVENT, fetchData)
+    return () => window.removeEventListener(LEDGER_UPDATED_EVENT, fetchData)
   }, [fetchData])
 
   // Total liquidity metrics

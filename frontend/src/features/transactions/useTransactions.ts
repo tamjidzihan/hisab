@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { apiClient } from '@/lib/api'
+import { LEDGER_UPDATED_EVENT } from '@/lib/ledgerEvents'
 import type { Transaction, TransactionType } from '@/types'
 
 export interface TransactionFilterState {
@@ -68,6 +69,8 @@ export function useTransactions() {
 
   useEffect(() => {
     fetchTransactions()
+    window.addEventListener(LEDGER_UPDATED_EVENT, fetchTransactions)
+    return () => window.removeEventListener(LEDGER_UPDATED_EVENT, fetchTransactions)
   }, [fetchTransactions])
 
   // Unique lists for dropdowns
