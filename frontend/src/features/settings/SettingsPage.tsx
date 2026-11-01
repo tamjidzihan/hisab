@@ -71,7 +71,10 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Settings Navigation Bar */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-[#e2e8f0]">
+      <div
+        data-tour-target="settings-sections"
+        className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-[#e2e8f0]"
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}

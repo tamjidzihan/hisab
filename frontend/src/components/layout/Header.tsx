@@ -44,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Quick Log Action */}
         <Button
+          data-tour-target="quick-log"
           size="sm"
           variant="primary"
           onClick={onQuickLog}

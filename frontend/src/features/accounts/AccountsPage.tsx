@@ -151,6 +151,7 @@ export const AccountsPage: React.FC = () => {
                 Transfer Funds
               </Button>
               <Button
+                data-tour-target="accounts-create"
                 variant="primary"
                 size="sm"
                 onClick={handleOpenCreateAccount}

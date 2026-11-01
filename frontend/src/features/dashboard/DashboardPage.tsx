@@ -68,13 +68,15 @@ export const DashboardPage: React.FC = () => {
           </Badge>
 
           {/* Interactive Month Navigator */}
-          <MonthNavigator
-            formattedMonthDisplay={formattedMonthDisplay}
-            isCurrentMonth={isCurrentMonth}
-            onPrevious={goToPreviousMonth}
-            onNext={goToNextMonth}
-            onCurrent={goToCurrentMonth}
-          />
+          <div data-tour-target="dashboard-months">
+            <MonthNavigator
+              formattedMonthDisplay={formattedMonthDisplay}
+              isCurrentMonth={isCurrentMonth}
+              onPrevious={goToPreviousMonth}
+              onNext={goToNextMonth}
+              onCurrent={goToCurrentMonth}
+            />
+          </div>
         </div>
       </div>
 

@@ -60,6 +60,8 @@ List filters: `from`, `to`, `type`, `categoryId`, `accountId`, `search`, `page`,
 ## Settings
 - GET/PATCH `/settings/profile`
 - GET/PATCH `/settings/preferences`
+- GET `/settings/tour` — retrieve the authenticated user's guided-tour completion status
+- PATCH `/settings/tour` with `{ "completed": boolean }` — save guided-tour completion status
 - POST `/account/export`
 - DELETE `/account`
 

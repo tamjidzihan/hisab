@@ -42,6 +42,27 @@ const User = sequelize.define('User', {
   },
 })
 
+const TourProgress = sequelize.define('TourProgress', {
+  userId: {
+    type: DataTypes.UUID,
+    primaryKey: true,
+    references: {
+      model: User,
+      key: 'id',
+    },
+    onDelete: 'CASCADE',
+  },
+  completed: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+})
+
 // 2. Account Model
 const Account = sequelize.define('Account', {
   id: {
@@ -403,6 +424,9 @@ const Session = sequelize.define('Session', {
 })
 
 // Establish Associations
+User.hasOne(TourProgress, { foreignKey: 'userId', as: 'tourProgress', onDelete: 'CASCADE' })
+TourProgress.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+
 User.hasMany(Account, { foreignKey: 'userId', as: 'accounts', onDelete: 'CASCADE' })
 Account.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 
@@ -442,6 +466,7 @@ Session.belongsTo(User, { foreignKey: 'userId', as: 'user' })
 module.exports = {
   sequelize,
   User,
+  TourProgress,
   Account,
   Category,
   Transaction,
@@ -451,4 +476,3 @@ module.exports = {
   SavingsGoalContribution,
   Session,
 }
-

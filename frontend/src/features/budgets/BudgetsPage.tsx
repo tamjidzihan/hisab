@@ -112,6 +112,7 @@ export const BudgetsPage: React.FC = () => {
           </Button>
 
           <Button
+            data-tour-target="budgets-create"
             variant="primary"
             size="sm"
             onClick={handleOpenCreate}

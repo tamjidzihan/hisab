@@ -1,4 +1,4 @@
-const { User, Account, Category, Transaction, Budget, SavingsGoal, Session } = require('../models')
+const { User, TourProgress, Account, Category, Transaction, Budget, SavingsGoal, Session } = require('../models')
 const { successResponse, errorResponse } = require('../utils/response')
 
 // GET /api/v1/settings/profile
@@ -39,6 +39,49 @@ const updateProfile = async (req, res, next) => {
         role: user.role,
         joinedDate: user.createdAt.toISOString().slice(0, 10),
       },
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// GET /api/v1/settings/tour
+const getTourProgress = async (req, res, next) => {
+  try {
+    const progress = await TourProgress.findByPk(req.user.id)
+    return successResponse(res, {
+      completed: progress?.completed ?? false,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+// PATCH /api/v1/settings/tour
+const updateTourProgress = async (req, res, next) => {
+  try {
+    const { completed } = req.body
+    if (typeof completed !== 'boolean') {
+      return errorResponse(res, 'The completed field must be a boolean.', 400)
+    }
+
+    const [progress] = await TourProgress.findOrCreate({
+      where: { userId: req.user.id },
+      defaults: { completed },
+    })
+
+    if (progress.completed !== completed) {
+      progress.completed = completed
+      progress.completedAt = completed ? new Date() : null
+      await progress.save()
+    } else if (completed && !progress.completedAt) {
+      progress.completedAt = new Date()
+      await progress.save()
+    }
+
+    return successResponse(res, {
+      completed: progress.completed,
+      completedAt: progress.completedAt,
     })
   } catch (error) {
     next(error)
@@ -128,8 +171,9 @@ const exportFullBackup = async (req, res, next) => {
 module.exports = {
   getProfile,
   updateProfile,
+  getTourProgress,
+  updateTourProgress,
   getSessions,
   terminateSession,
   exportFullBackup,
 }
-
