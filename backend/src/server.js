@@ -1,7 +1,7 @@
 const app = require('./app')
 const env = require('./config/env')
 const { sequelize, User } = require('./models')
-const seedDefaults = require('./seeders/seedDefaults')
+// const seedDefaults = require('./seeders/seedDefaults')
 
 const startServer = async () => {
   try {
@@ -13,12 +13,12 @@ const startServer = async () => {
     await sequelize.sync()
     console.log('[Hisab Server]: Schema models synchronized.')
 
-    // Auto-seed if database is empty
-    const userCount = await User.count()
-    if (userCount === 0) {
-      console.log('[Hisab Server]: No account controllers found. Performing initial database seed...')
-      await seedDefaults()
-    }
+    // // Auto-seed if database is empty
+    // const userCount = await User.count()
+    // if (userCount === 0) {
+    //   console.log('[Hisab Server]: No account controllers found. Performing initial database seed...')
+    //   await seedDefaults()
+    // }
 
     const server = app.listen(env.PORT, () => {
       console.log(`[Hisab Server]: The Draftsman's Ledger API listening at http://localhost:${env.PORT}`)
