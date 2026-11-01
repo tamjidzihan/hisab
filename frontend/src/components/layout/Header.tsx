@@ -1,19 +1,17 @@
 import React from 'react'
-import { Menu, Plus, HelpCircle } from 'lucide-react'
-import { Button } from '@/components/common/Button'
+import { Menu, HelpCircle } from 'lucide-react'
 import { UserMenu } from './UserMenu'
 import { NotificationDropdown } from './NotificationDropdown'
 import { format } from 'date-fns'
+import { QuickLogTransaction } from '@/features/transactions/components/QuickLogTransaction'
 
 export interface HeaderProps {
   onOpenMobileSidebar: () => void
-  onQuickLog?: () => void
   onOpenTourGuide?: () => void
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenMobileSidebar,
-  onQuickLog,
   onOpenTourGuide,
 }) => {
   const currentDate = format(new Date(), 'EEEE, dd MMMM yyyy')
@@ -42,18 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Right: Quick Action, Tour Guide, Alerts & Profile */}
       <div className="flex items-center gap-2 sm:gap-2.5">
-        {/* Quick Log Action */}
-        <Button
-          data-tour-target="quick-log"
-          size="sm"
-          variant="primary"
-          onClick={onQuickLog}
-          leftIcon={<Plus className="w-3.5 h-3.5" />}
-          className="text-xs font-semibold"
-        >
-          <span className="hidden sm:inline">Quick Log</span>
-          <span className="sm:hidden">Log</span>
-        </Button>
+        <QuickLogTransaction />
 
         {/* Tour Guide & In-App Help Trigger */}
         {onOpenTourGuide && (
