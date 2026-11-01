@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { format, addMonths, subMonths, isSameMonth } from 'date-fns'
 import { apiClient } from '@/lib/api'
+import { LEDGER_UPDATED_EVENT } from '@/lib/ledgerEvents'
 import type { Budget } from '@/types'
 
 export type BudgetFilterType = 'all' | 'warning' | 'exceeded' | 'safe'
@@ -67,6 +68,9 @@ export function useBudgets() {
 
   useEffect(() => {
     fetchBudgets(currentMonthKey)
+    const refreshCurrentBudgets = () => fetchBudgets(currentMonthKey)
+    window.addEventListener(LEDGER_UPDATED_EVENT, refreshCurrentBudgets)
+    return () => window.removeEventListener(LEDGER_UPDATED_EVENT, refreshCurrentBudgets)
   }, [currentMonthKey, fetchBudgets])
 
   // Active budgets for the selected month
