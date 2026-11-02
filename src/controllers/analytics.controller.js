@@ -9,6 +9,7 @@ const {
   SavingsGoalContribution,
 } = require('../models')
 const { successResponse } = require('../utils/response')
+const { calculateAccountBalances } = require('../utils/accountBalances')
 
 // GET /api/v1/analytics/summary?from=YYYY-MM-DD&to=YYYY-MM-DD
 const getSummary = async (req, res, next) => {
@@ -125,42 +126,22 @@ const getDashboard = async (req, res, next) => {
       order: [['createdAt', 'ASC']],
     })
 
-    const accountsWithBalances = await Promise.all(
-      accounts.map(async (acc) => {
-        const txs = await Transaction.findAll({
-          where: { accountId: acc.id, userId, status: 'posted' },
-          attributes: ['type', 'amountMinor', 'description'],
-        })
-
-        let currentBalanceMinor = BigInt(acc.openingBalanceMinor)
-        for (const tx of txs) {
-          const amt = BigInt(tx.amountMinor)
-          if (tx.type === 'income') {
-            currentBalanceMinor += amt
-          } else if (tx.type === 'expense') {
-            currentBalanceMinor -= amt
-          } else if (tx.type === 'transfer') {
-            if (tx.description && tx.description.toLowerCase().startsWith('transfer from')) {
-              currentBalanceMinor += amt
-            } else {
-              currentBalanceMinor -= amt
-            }
-          }
-        }
-
-        return {
-          id: acc.id,
-          userId: acc.userId,
-          name: acc.name,
-          type: acc.type,
-          currency: acc.currency,
-          openingBalanceMinor: Number(acc.openingBalanceMinor),
-          currentBalanceMinor: Number(currentBalanceMinor),
-          accountNumberMasked: acc.accountNumber ? `•••• ${acc.accountNumber.slice(-4)}` : undefined,
-          isArchived: acc.isArchived,
-        }
-      })
-    )
+    const postedTransactions = await Transaction.findAll({
+      where: { userId, status: 'posted' },
+      attributes: ['id', 'accountId', 'type', 'amountMinor', 'description', 'transferGroupId', 'createdAt'],
+    })
+    const balances = calculateAccountBalances(accounts, postedTransactions)
+    const accountsWithBalances = accounts.map((account) => ({
+      id: account.id,
+      userId: account.userId,
+      name: account.name,
+      type: account.type,
+      currency: account.currency,
+      openingBalanceMinor: Number(account.openingBalanceMinor),
+      currentBalanceMinor: Number(balances.get(account.id)),
+      accountNumberMasked: account.accountNumber ? `•••• ${account.accountNumber.slice(-4)}` : undefined,
+      isArchived: account.isArchived,
+    }))
 
     // 3. Budgets with spent
     const budgets = await Budget.findAll({
@@ -576,4 +557,3 @@ module.exports = {
   getBudgetPerformance,
   getTopExpenses,
 }
-

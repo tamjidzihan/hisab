@@ -1,5 +1,6 @@
 const { Account, Transaction } = require('../models')
 const { successResponse, errorResponse } = require('../utils/response')
+const { calculateAccountBalances } = require('../utils/accountBalances')
 
 // GET /api/v1/accounts
 const getAccounts = async (req, res, next) => {
@@ -10,39 +11,15 @@ const getAccounts = async (req, res, next) => {
       order: [['createdAt', 'ASC']],
     })
 
-    // Compute derived balance for each account:
-    // currentBalance = openingBalanceMinor + inflows - outflows
-    const accountsWithBalances = await Promise.all(
-      accounts.map(async (acc) => {
-        const transactions = await Transaction.findAll({
-          where: { accountId: acc.id, userId, status: 'posted' },
-          attributes: ['type', 'amountMinor', 'description'],
-        })
-
-        let currentBalanceMinor = BigInt(acc.openingBalanceMinor)
-
-        for (const tx of transactions) {
-          const amt = BigInt(tx.amountMinor)
-          if (tx.type === 'income') {
-            currentBalanceMinor += amt
-          } else if (tx.type === 'expense') {
-            currentBalanceMinor -= amt
-          } else if (tx.type === 'transfer') {
-            // If transfer description indicates inbound vs outbound
-            if (tx.description && tx.description.toLowerCase().startsWith('transfer from')) {
-              currentBalanceMinor += amt
-            } else {
-              currentBalanceMinor -= amt
-            }
-          }
-        }
-
-        return {
-          ...acc.toJSON(),
-          currentBalanceMinor: Number(currentBalanceMinor),
-        }
-      })
-    )
+    const transactions = await Transaction.findAll({
+      where: { userId, status: 'posted' },
+      attributes: ['id', 'accountId', 'type', 'amountMinor', 'description', 'transferGroupId', 'createdAt'],
+    })
+    const balances = calculateAccountBalances(accounts, transactions)
+    const accountsWithBalances = accounts.map((account) => ({
+      ...account.toJSON(),
+      currentBalanceMinor: Number(balances.get(account.id)),
+    }))
 
     return successResponse(res, { accounts: accountsWithBalances })
   } catch (error) {
@@ -132,4 +109,3 @@ module.exports = {
   updateAccount,
   deleteAccount,
 }
-
