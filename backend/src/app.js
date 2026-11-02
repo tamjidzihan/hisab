@@ -11,6 +11,10 @@ const { apiLimiter } = require('./middlewares/rateLimiter')
 
 const app = express()
 
+if (process.env.VERCEL === '1') {
+  app.set('trust proxy', 1)
+}
+
 // Security HTTP headers
 app.use(helmet())
 
@@ -75,4 +79,3 @@ app.use((req, res) => {
 app.use(errorHandler)
 
 module.exports = app
-
