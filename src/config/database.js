@@ -9,6 +9,7 @@ if (env.DB_DIALECT === 'mysql') {
     host: env.DB_HOST,
     port: env.DB_PORT,
     dialect: 'mysql',
+    dialectModule: require('mysql2'),
     logging: env.NODE_ENV === 'development' ? console.log : false,
     pool: {
       max: 10,
@@ -39,4 +40,3 @@ if (env.DB_DIALECT === 'mysql') {
 }
 
 module.exports = sequelize
-
